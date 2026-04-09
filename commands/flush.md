@@ -176,12 +176,14 @@ gh pr merge <N> --merge
 ```
 
 **If merge conflict:**
-1. Switch to base branch and pull: `git checkout <BRANCH> && git pull`
-2. Merge feature branch locally: `git merge <type>/<desc>`
-3. Show conflict files to user, guide resolution
-4. After resolved: `git add <resolved-files> && git commit` (no-message flag — git auto-generates merge commit)
-5. Push resolved base: `git push origin <BRANCH>`
-6. Cleanup: `git branch -d <type>/<desc> && git push origin --delete <type>/<desc>`
+1. Pull latest base into feature branch:
+   ```bash
+   git checkout <type>/<desc> && git fetch origin <BRANCH> && git merge origin/<BRANCH>
+   ```
+2. Show conflict files to user, guide resolution
+3. After resolved: `git add <resolved-files> && git commit`
+4. Push updated feature branch: `git push origin <type>/<desc>`
+5. Retry merge: `gh pr merge <N> --merge`
 
 **If merge succeeds:**
 ```bash
