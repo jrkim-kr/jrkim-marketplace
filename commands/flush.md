@@ -15,7 +15,8 @@ Full pipeline: error docs → GitHub issue → conventional commit → push/PR.
 {
   "scopes": { "src/api/**": "api" },   // glob → scope
   "errorDocDir": "./docs/errors",       // default: auto-discover
-  "coAuthoredBy": "Claude Opus 4.6 <noreply@anthropic.com>"  // false to disable
+  "coAuthoredBy": "Claude Opus 4.6 <noreply@anthropic.com>",  // false to disable
+  "conflictStrategy": "merge"  // "merge" (default) or "rebase"
 }
 ```
 
@@ -175,15 +176,29 @@ After PR created, attempt merge:
 gh pr merge <N> --merge
 ```
 
-**If merge conflict:**
-1. Pull latest base into feature branch:
+**If merge conflict** — use `.flushrc.json` `conflictStrategy` (default: `merge`):
+
+**merge (default):**
+1. Base를 feature에 merge:
    ```bash
    git checkout <type>/<desc> && git fetch origin <BRANCH> && git merge origin/<BRANCH>
    ```
-2. Show conflict files to user, guide resolution
-3. After resolved: `git add <resolved-files> && git commit`
-4. Push updated feature branch: `git push origin <type>/<desc>`
-5. Retry merge: `gh pr merge <N> --merge`
+2. Show conflict files, guide resolution
+3. `git add <resolved-files> && git commit`
+4. `git push origin <type>/<desc>`
+5. Retry: `gh pr merge <N> --merge`
+
+**rebase:**
+1. Feature 커밋을 base 위로 재배치:
+   ```bash
+   git checkout <type>/<desc> && git fetch origin <BRANCH> && git rebase origin/<BRANCH>
+   ```
+2. Rebase 중 충돌 시 — 각 커밋마다 해결:
+   - Show conflict files, guide resolution
+   - `git add <resolved-files> && git rebase --continue`
+   - 모든 커밋 완료될 때까지 반복
+3. `git push --force-with-lease origin <type>/<desc>`
+4. Retry: `gh pr merge <N> --merge`
 
 **If merge succeeds:**
 ```bash
