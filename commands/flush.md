@@ -170,9 +170,22 @@ EOF
 ```bash
 git checkout -b <type>/<desc> && git push -u origin <type>/<desc> && gh pr create --title "type(scope): desc" --body "..."
 ```
-After merge:
+After PR created, attempt merge:
 ```bash
-gh pr merge <N> --merge && git checkout <BRANCH> && git pull && git branch -d <type>/<desc> && git push origin --delete <type>/<desc>
+gh pr merge <N> --merge
+```
+
+**If merge conflict:**
+1. Switch to base branch and pull: `git checkout <BRANCH> && git pull`
+2. Merge feature branch locally: `git merge <type>/<desc>`
+3. Show conflict files to user, guide resolution
+4. After resolved: `git add <resolved-files> && git commit` (no-message flag — git auto-generates merge commit)
+5. Push resolved base: `git push origin <BRANCH>`
+6. Cleanup: `git branch -d <type>/<desc> && git push origin --delete <type>/<desc>`
+
+**If merge succeeds:**
+```bash
+git checkout <BRANCH> && git pull && git branch -d <type>/<desc> && git push origin --delete <type>/<desc>
 ```
 
 ---
