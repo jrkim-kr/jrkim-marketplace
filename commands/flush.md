@@ -37,7 +37,7 @@ If pull conflicts → stop, guide user. Otherwise parse output into:
 
 ## 0-2. Analyze from DIFF_SNAPSHOT
 
-**Binary / large files:** If detected, warn user inline (don't ask separately — include in the confirmation below).
+**Binary / large files:** If detected, note in the plan log (no separate prompt).
 
 **Type inference:**
 
@@ -58,15 +58,9 @@ If pull conflicts → stop, guide user. Otherwise parse output into:
 
 **Error doc dir (cache once):** `.flushrc.json` `errorDocDir`, or `find . -type d -name "errors" -not -path "*/node_modules/*" -not -path "*/.git/*"`, or `./errors/`. Store as **ERROR_DIR** — reuse in Phase 1 and 3.
 
-## 0-3. Single confirmation
+## 0-3. Log plan (no confirmation)
 
-Present everything at once — ONE AskUserQuestion:
-- header: "Flush Plan"
-- Show: type, scope, file list, binary warnings (if any)
-- question: "Proceed?"
-- options: "Yes" / "Change type/scope" / "Cancel"
-
-If user changes type/scope, update and proceed. No re-analysis needed.
+Print the analysis result inline (type, scope, file list, binary warnings if any) so the user can see what was detected, then proceed immediately. Do NOT ask for confirmation here.
 
 ---
 
@@ -97,7 +91,7 @@ If user changes type/scope, update and proceed. No re-analysis needed.
 # PHASE 2: GITHUB ISSUE CREATION
 
 Skip entirely if: GH_AVAILABLE is false, or type is `docs`/`style`/`chore`/`test`.
-For `refactor`/`perf`: ask user (combine with Phase 0 confirmation if possible).
+For `refactor`/`perf`: create issue automatically (no confirmation needed).
 
 **Single bash call** — duplicate check + label ensure + create:
 ```bash
