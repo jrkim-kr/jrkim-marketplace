@@ -1,0 +1,11 @@
+{
+  "name": "flush",
+  "version": "1.0.0",
+  "description": "Flush your changes through a full pipeline — analyze diff, document errors, create GitHub issues, conventional commit, and push/PR in one command",
+  "author": {
+    "name": "jrkim"
+  },
+  "repository": "https://github.com/jrkim-kr/flush-plugin",
+  "license": "MIT",
+  "keywords": ["git", "commit", "issue", "workflow", "conventional-commits", "pipeline"]
+}
