@@ -1,0 +1,8 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+*.key
+credentials*.json
+node_modules/
+*.log

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "jrkim-marketplace",
+  "description": "Local plugins by jrkim",
+  "owner": {
+    "name": "jrkim"
+  },
+  "plugins": [
+    {
+      "name": "flush",
+      "description": "Flush changes through the full pipeline — error docs, GitHub issue, conventional commit, push/PR",
+      "source": "./flush",
+      "category": "development"
+    },
+    {
+      "name": "architect-advisor",
+      "description": "Senior AI architect & PM advisor — 4-phase engineering workflow with trilingual term glossary",
+      "source": "./architect-advisor",
+      "category": "development"
+    },
+    {
+      "name": "my-utils",
+      "description": "Utility slash commands — daily scrum, doc sync, translations, screenshots, Notion logging, AI builder digest",
+      "source": "./my-utils",
+      "category": "utility"
+    }
+  ]
+}

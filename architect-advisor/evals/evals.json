@@ -1,0 +1,98 @@
+{
+  "skill_name": "architect-advisor",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "우리 쇼핑몰에 결제 시스템을 새로 만들어야 해. 카카오페이, 토스페이 연동하고 환불 처리도 필요해. 이 모듈 설계 도와줘.",
+      "expected_output": "decompose → decision → adr → audit → portfolio 순서대로 실행: Mermaid 토폴로지, MVP vs 견고한 아키텍처 비교 테이블, ADR 파일 생성, Integration Risk 포함 리스크 감사, portfolio 회고(Keep/Problem/Try/Revisit/Knowledge Gap). 비전공자 톤(비유 먼저, 괄호 안 용어/원어 — 정의).",
+      "files": [],
+      "assertions": [
+        {"name": "has_all_steps", "type": "contains_all", "values": ["decompose", "decision", "adr", "audit", "portfolio"], "description": "5개 step (decompose~portfolio) 워크플로우 헤딩이 모두 존재"},
+        {"name": "has_mermaid_diagram", "type": "contains", "value": "```mermaid", "description": "Mermaid 다이어그램 포함"},
+        {"name": "has_comparison_table", "type": "regex", "pattern": "방안\\s*(A|B).*MVP|MVP.*방안\\s*(A|B)", "description": "MVP vs 견고한 아키텍처 비교 테이블"},
+        {"name": "has_risk_scenarios", "type": "min_count", "pattern": "시나리오|리스크|장애|실패|재전송", "min": 3, "description": "리스크 시나리오 3개 이상"},
+        {"name": "has_adr_generation", "type": "regex", "pattern": "/adr/|0001-.*\\.md", "description": "ADR 파일 경로/파일명 생성"},
+        {"name": "has_integration_risk_coverage", "type": "contains_any", "values": ["Integration", "통합", "API 계약", "이벤트 순서", "공유 리소스"], "description": "audit Integration Risk 도메인 다룸"},
+        {"name": "has_retrospective", "type": "contains_all", "values": ["Keep", "Problem", "Try"], "description": "portfolio 회고 (Keep/Problem/Try)"},
+        {"name": "tone_has_analogy", "type": "regex", "pattern": ".+\\((.+?/.+?\\s*—.+?)\\)", "description": "비유 (용어/원어 — 정의) 톤"},
+        {"name": "has_trilingual_terms", "type": "regex", "pattern": "[가-힣]+.*[\\u4e00-\\u9fff]+.*[A-Za-z]+|[가-힣]+.*[A-Za-z]+.*\\/", "description": "한/중/영 전문용어 병기"},
+        {"name": "has_star_case", "type": "contains_any", "values": ["Situation", "Challenge", "Action", "Result", "배경", "도전", "행동", "성과", "STAR"], "description": "STAR 케이스 스터디 포함"},
+        {"name": "has_bilingual_interview", "type": "contains_all", "values": ["한국어", "中文"], "description": "중한 이중언어 면접 요약"},
+        {"name": "output_in_korean", "type": "primary_language", "language": "ko", "description": "메인 출력이 한국어"},
+        {"name": "has_idempotency", "type": "contains_any", "values": ["멱등", "Idempoten", "幂等"], "description": "멱등성 개념 다룸 (결제 필수)"},
+        {"name": "no_code_before_decision", "type": "custom", "description": "decision step 확정 전 구체적 비즈니스 코드 없음"}
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "实时聊天功能需要设计一下。要支持群聊、已读回执和消息撤回。用户量预估10万DAU。",
+      "expected_output": "중국어 입력에도 한국어로 출력하되 전문용어는 중/영/한 병기. WebSocket vs SSE 방안 비교, 메시지 상태 머신, ADR, Integration Risk(이벤트 순서/메시지 순서), portfolio 회고.",
+      "files": [],
+      "assertions": [
+        {"name": "has_all_steps", "type": "contains_all", "values": ["decompose", "decision", "adr", "audit", "portfolio"], "description": "5개 step (decompose~portfolio) 워크플로우 헤딩이 모두 존재"},
+        {"name": "has_mermaid_diagram", "type": "contains", "value": "```mermaid", "description": "Mermaid 다이어그램 포함"},
+        {"name": "has_state_machine", "type": "contains_any", "values": ["상태 머신", "State Machine", "상태 전이", "状态机"], "description": "메시지 상태 머신 설계"},
+        {"name": "output_in_korean", "type": "primary_language", "language": "ko", "description": "중국어 입력이지만 한국어로 출력"},
+        {"name": "has_trilingual_terms", "type": "regex", "pattern": "[가-힣]+.*[\\u4e00-\\u9fff]+.*[A-Za-z]+|[가-힣]+.*[A-Za-z]+.*\\/", "description": "한/중/영 전문용어 병기"},
+        {"name": "has_comparison_table", "type": "regex", "pattern": "방안\\s*(A|B)|WebSocket|SSE|Long Polling", "description": "통신 방식 비교 분석"},
+        {"name": "has_adr_generation", "type": "regex", "pattern": "/adr/|0001-.*\\.md", "description": "ADR 파일 경로/파일명 생성"},
+        {"name": "has_integration_risk_coverage", "type": "contains_any", "values": ["Integration", "통합", "API 계약", "이벤트 순서", "공유 리소스", "메시지 순서"], "description": "audit Integration Risk 도메인 (이벤트 순서/메시지 순서)"},
+        {"name": "has_retrospective", "type": "contains_all", "values": ["Keep", "Problem", "Try"], "description": "portfolio 회고 (Keep/Problem/Try)"},
+        {"name": "tone_has_analogy", "type": "regex", "pattern": ".+\\((.+?/.+?\\s*—.+?)\\)", "description": "비유 (용어/원어 — 정의) 톤"},
+        {"name": "has_star_case", "type": "contains_any", "values": ["Situation", "Challenge", "Action", "Result", "배경", "도전", "행동", "성과", "STAR"], "description": "STAR 케이스 스터디 포함"},
+        {"name": "has_scalability_discussion", "type": "contains_any", "values": ["10만", "100K", "DAU", "확장", "스케일", "Scale"], "description": "10만 DAU 규모 대응 논의"},
+        {"name": "has_bilingual_interview", "type": "contains_all", "values": ["한국어", "中文"], "description": "중한 이중언어 면접 요약"},
+        {"name": "no_code_before_decision", "type": "custom", "description": "decision step 확정 전 구체적 비즈니스 코드 없음"}
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "재고 관리 시스템에서 동시 주문 처리가 문제야. 100명이 동시에 같은 상품을 주문하면 재고가 마이너스로 가는 버그가 있어. 이 부분 아키텍처를 다시 잡아줘.",
+      "expected_output": "동시성 문제에 특화된 분석: 낙관적/비관적 잠금 비교, 분산 잠금, 재고 상태 머신, ADR, Integration Risk(공유 리소스 경합/순환 의존/Lock), portfolio 회고(Keep/Problem/Try/Revisit/Knowledge Gap).",
+      "files": [],
+      "assertions": [
+        {"name": "has_all_steps", "type": "contains_all", "values": ["decompose", "decision", "adr", "audit", "portfolio"], "description": "5개 step (decompose~portfolio) 워크플로우 헤딩이 모두 존재"},
+        {"name": "has_mermaid_diagram", "type": "contains", "value": "```mermaid", "description": "Mermaid 다이어그램 포함"},
+        {"name": "has_lock_comparison", "type": "contains_any", "values": ["낙관적 잠금", "비관적 잠금", "Optimistic", "Pessimistic", "乐观锁", "悲观锁"], "description": "잠금 전략 비교 분석"},
+        {"name": "has_race_condition", "type": "contains_any", "values": ["Race Condition", "레이스 컨디션", "경쟁 조건", "竞态"], "description": "레이스 컨디션 문제 다룸"},
+        {"name": "has_comparison_table", "type": "regex", "pattern": "방안\\s*(A|B)|MVP|견고", "description": "MVP vs 견고한 아키텍처 비교"},
+        {"name": "has_adr_generation", "type": "regex", "pattern": "/adr/|0001-.*\\.md", "description": "ADR 파일 경로/파일명 생성"},
+        {"name": "has_integration_risk_coverage", "type": "contains_any", "values": ["공유 리소스", "순환 의존", "Lock", "잠금"], "description": "audit Integration Risk 도메인 (공유 리소스/Lock/순환 의존)"},
+        {"name": "has_retrospective", "type": "contains_all", "values": ["Keep", "Problem", "Try"], "description": "portfolio 회고 (Keep/Problem/Try)"},
+        {"name": "tone_has_analogy", "type": "regex", "pattern": ".+\\((.+?/.+?\\s*—.+?)\\)", "description": "비유 (용어/원어 — 정의) 톤"},
+        {"name": "has_star_case", "type": "contains_any", "values": ["Situation", "Challenge", "Action", "Result", "배경", "도전", "행동", "성과", "STAR"], "description": "STAR 케이스 스터디 포함"},
+        {"name": "has_trilingual_terms", "type": "regex", "pattern": "[가-힣]+.*[\\u4e00-\\u9fff]+.*[A-Za-z]+|[가-힣]+.*[A-Za-z]+.*\\/", "description": "한/중/영 전문용어 병기"},
+        {"name": "has_inventory_state_machine", "type": "contains_any", "values": ["상태 머신", "State Machine", "상태 전이", "재고 상태"], "description": "재고 상태 머신 설계"},
+        {"name": "has_bilingual_interview", "type": "contains_all", "values": ["한국어", "中文"], "description": "중한 이중언어 면접 요약"},
+        {"name": "no_code_before_decision", "type": "custom", "description": "decision step 확정 전 구체적 비즈니스 코드 없음"}
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "RabbitMQ 쓸까 Redis Streams 쓸까 고민 중이야.",
+      "expected_output": "단답형 선택이 아니라, 되돌리기 힘든 의사결정임을 지적하고 architect-advisor 워크플로우(decompose~adr)를 제안. ADR 기록 권유. 사용자가 원치 않으면 건너뛸 수 있는 선택지 제공.",
+      "files": [],
+      "assertions": [
+        {"name": "proposes_workflow", "type": "contains_any", "values": ["architect-advisor", "decompose step", "decision step"], "description": "architect-advisor 워크플로우를 선제적으로 제안"},
+        {"name": "mentions_irreversibility", "type": "contains_any", "values": ["되돌리", "reversib"], "description": "되돌리기 힘든 결정임을 지적"},
+        {"name": "mentions_adr", "type": "contains", "value": "ADR", "description": "ADR 기록 권유"},
+        {"name": "offers_opt_out", "type": "contains_any", "values": ["나중에", "지금은 건너", "skip"], "description": "사용자가 원치 않으면 건너뛸 수 있는 옵션 제공"},
+        {"name": "tone_has_analogy", "type": "regex", "pattern": ".+\\((.+?/.+?\\s*—.+?)\\)", "description": "비유 (용어/원어 — 정의) 톤"},
+        {"name": "output_in_korean", "type": "primary_language", "language": "ko", "description": "메인 출력이 한국어"}
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "지난번 결제 프로젝트 회고에서 Try 항목이 뭐였지? 새 정산 시스템 설계 시작하려고.",
+      "expected_output": "이전 프로젝트의 architect-advisor/<project>/portfolio/retrospective.md를 참조(또는 참조하겠다고 명시)하고, 그 안의 Try/Revisit/Knowledge Gap 항목을 표면화. 이후 새 정산 시스템에 대해 decompose step부터 시작.",
+      "files": [],
+      "assertions": [
+        {"name": "reads_prior_retro", "type": "contains_any", "values": ["retrospective.md", "회고", "이전 프로젝트"], "description": "이전 프로젝트 회고 파일을 참조"},
+        {"name": "surfaces_try_items", "type": "contains", "value": "Try", "description": "회고의 Try 항목을 표면화"},
+        {"name": "starts_decompose", "type": "contains", "value": "decompose step", "description": "새 프로젝트의 decompose step 시작"},
+        {"name": "tone_has_analogy", "type": "regex", "pattern": ".+\\((.+?/.+?\\s*—.+?)\\)", "description": "비유 (용어/원어 — 정의) 톤"},
+        {"name": "output_in_korean", "type": "primary_language", "language": "ko", "description": "메인 출력이 한국어"}
+      ]
+    }
+  ]
+}

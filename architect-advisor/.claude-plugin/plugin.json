@@ -1,0 +1,10 @@
+{
+  "name": "architect-advisor",
+  "version": "1.0.0",
+  "description": "Chloe's senior AI architect & PM advisor — 4-phase engineering workflow with trilingual term glossary",
+  "author": {
+    "name": "jrkim"
+  },
+  "license": "MIT",
+  "keywords": ["architecture", "system-design", "trade-off", "glossary", "workflow"]
+}

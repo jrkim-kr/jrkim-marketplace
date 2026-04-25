@@ -1,0 +1,10 @@
+{
+  "name": "my-utils",
+  "version": "1.0.0",
+  "description": "Collection of deterministic utility slash commands — daily scrum, doc sync, translations, screenshots, Notion logging, AI builder digest",
+  "author": {
+    "name": "jrkim"
+  },
+  "license": "MIT",
+  "keywords": ["utilities", "slash-commands", "workflow", "notion", "docs", "translation"]
+}
