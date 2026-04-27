@@ -1,0 +1,54 @@
+{
+  "project": "jrkim-marketplace",
+  "project_slug": "jrkim-marketplace",
+  "created_at": "2026-04-27T05:37:41.446473+00:00",
+  "updated_at": "2026-04-27T05:37:41.446901+00:00",
+  "current_step": "decompose",
+  "steps": {
+    "decompose": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null
+    },
+    "decision": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "decision": {
+        "choice": "plan_A",
+        "reason": "외부 의존 0, Vercel public/ 자동 서빙, 폰트는 변경 빈도 사실상 0이라 직접 커밋이 가장 단순·안전",
+        "decided_at": "2026-04-27T05:37:41.446899+00:00"
+      }
+    },
+    "adr": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "adr_path": null,
+      "artifacts": []
+    },
+    "audit": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "domain": null,
+      "feedback_loop_count": 0
+    },
+    "portfolio": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null
+    }
+  },
+  "terms": [],
+  "patterns": {
+    "status": "pending",
+    "last_generated_at": null,
+    "source_error_count": 0,
+    "pattern_count": 0,
+    "output_path": null,
+    "artifacts": []
+  },
+  "notion_sync": false,
+  "notion_db_id": null
+}
