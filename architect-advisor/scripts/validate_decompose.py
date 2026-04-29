@@ -144,6 +144,164 @@ def main() -> int:
     return 0 if result["ok"] else 1
 
 
+def _parse_steps(raw: str, suffix: str):
+    """Parse step list from YAML or JSON. Returns list or None on error.
+
+    PyYAML is preferred when available; otherwise falls back to a tiny YAML
+    parser tuned to the architect-advisor decompose schema (top-level list,
+    flat mappings, list values), and finally to JSON.
+    """
+    if suffix in (".json",):
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError as e:
+            sys.stderr.write(f"ERROR: JSON parse failed: {e}\n")
+            return None
+
+    try:
+        import yaml  # type: ignore
+        try:
+            return yaml.safe_load(raw)
+        except yaml.YAMLError as e:
+            sys.stderr.write(f"ERROR: YAML parse failed: {e}\n")
+            return None
+    except ImportError:
+        pass
+
+    # Minimal YAML fallback
+    try:
+        return _parse_minimal_yaml(raw)
+    except Exception as e:
+        sys.stderr.write(
+            f"ERROR: PyYAML unavailable and minimal parser failed ({e}). "
+            "Install PyYAML or convert the file to JSON.\n"
+        )
+        return None
+
+
+def _parse_minimal_yaml(raw: str):
+    """Tiny YAML reader for top-level list of step mappings.
+
+    Supports:
+      - Top-level list `- key: value` items
+      - Nested mappings (one level deep, e.g. context_brief)
+      - Flow lists `[a, b, c]`
+      - Block lists with `-` items at consistent indent
+      - Strings (quoted or unquoted)
+    """
+    lines = [l.rstrip() for l in raw.splitlines() if l.strip() and not l.lstrip().startswith("#")]
+    items: list[dict] = []
+    current: dict | None = None
+    nested_key: str | None = None
+    nested: dict | None = None
+    block_list_key: str | None = None
+    block_list_indent = 0
+    block_list_target: list | None = None
+
+    def commit_nested():
+        nonlocal nested, nested_key
+        if nested is not None and nested_key is not None and current is not None:
+            current[nested_key] = nested
+        nested = None
+        nested_key = None
+
+    for line in lines:
+        stripped = line.lstrip()
+        indent = len(line) - len(stripped)
+
+        if stripped.startswith("- ") and indent == 0:
+            commit_nested()
+            block_list_key = None
+            current = {}
+            items.append(current)
+            kv = stripped[2:]
+            _assign_kv(current, kv)
+            continue
+
+        if block_list_key is not None and stripped.startswith("- ") and indent == block_list_indent:
+            block_list_target.append(_coerce(stripped[2:].strip()))
+            continue
+        elif block_list_key is not None:
+            block_list_key = None
+            block_list_target = None
+
+        if current is None:
+            continue
+
+        if indent >= 4 and nested_key is not None:
+            _assign_kv(nested, stripped, allow_block_list=False)
+            continue
+        elif indent >= 2 and nested_key is None:
+            # nested mapping under current
+            if ":" in stripped and not stripped.startswith("-"):
+                key, _, value = stripped.partition(":")
+                key = key.strip()
+                value = value.strip()
+                if not value:
+                    nested_key = key
+                    nested = {}
+                else:
+                    if value.startswith("[") and value.endswith("]"):
+                        current[key] = _parse_flow_list(value)
+                    else:
+                        # could be a block list following
+                        current[key] = []
+                        block_list_key = key
+                        block_list_indent = indent
+                        block_list_target = current[key]
+                        if value:
+                            current[key] = _coerce(value)
+                            block_list_key = None
+                continue
+        else:
+            commit_nested()
+            if ":" in stripped:
+                _assign_kv(current, stripped)
+
+    commit_nested()
+    return items
+
+
+def _assign_kv(target: dict, kv: str, allow_block_list: bool = True):
+    if ":" not in kv:
+        return
+    key, _, value = kv.partition(":")
+    key = key.strip()
+    value = value.strip()
+    if not value:
+        target[key] = []
+        return
+    if value.startswith("[") and value.endswith("]"):
+        target[key] = _parse_flow_list(value)
+    else:
+        target[key] = _coerce(value)
+
+
+def _parse_flow_list(value: str) -> list:
+    inner = value[1:-1].strip()
+    if not inner:
+        return []
+    return [_coerce(part.strip()) for part in inner.split(",")]
+
+
+def _coerce(value: str):
+    if not value:
+        return ""
+    if (value.startswith('"') and value.endswith('"')) or (value.startswith("'") and value.endswith("'")):
+        return value[1:-1]
+    if value.lower() == "true":
+        return True
+    if value.lower() == "false":
+        return False
+    if value.lower() in ("null", "none", "~"):
+        return None
+    if re.match(r"^-?\d+$", value):
+        return int(value)
+    if re.match(r"^-?\d+\.\d+$", value):
+        return float(value)
+    return value
+
+
 def _find_cycle(graph: dict) -> list:
     color: dict = {}  # 0=white, 1=gray, 2=black
     parent: dict = {}

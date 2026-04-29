@@ -64,7 +64,7 @@ python3 scripts/workflow-state.py list-projects
 
 **횡단 도구 (수동 호출)**
 - `term-glossary` — 기술 용어 한/중/영 3개 국어 정리 & Notion DB 동기화.
-- `arch-err-pattern` — `docs/errors/ERR-*.md` 횡단 분석으로 재발 충돌 패턴 추출 → `writing-plans`가 자동 참조하는 `CONFLICT_PATTERNS.md` 생성.
+- `arch-err-pattern` — `<ERR_DIR>/ERR-*.md` 횡단 분석으로 재발 충돌 패턴 추출 → `writing-plans`가 자동 참조하는 `CONFLICT_PATTERNS.md` 생성. ERR_DIR은 `.flushrc.json` → `find errors/` → `./errors/` 3단계 자동 해석 (W0.1, flush 플러그인과 동일 규칙).
 
 ## 워크플로우
 

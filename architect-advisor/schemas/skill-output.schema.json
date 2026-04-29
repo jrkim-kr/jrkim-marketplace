@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/jrkim/architect-advisor/schemas/skill-output.schema.json",
+  "title": "architect-advisor sub-skill output contract",
+  "description": "Unified return shape for all 6 sub-skills (decompose / decision / adr / audit / err-pattern / portfolio). Inspired by ECC agent-harness-construction's status / summary / next_actions / artifacts pattern, adapted for architect-advisor's downstream pipeline.",
+  "type": "object",
+  "required": ["status", "summary", "next_actions", "artifacts", "schema_version"],
+  "additionalProperties": true,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "description": "Lock version. Bump when shape changes; old versions retained one minor cycle for backward compatibility."
+    },
+    "status": {
+      "enum": ["success", "warning", "error"],
+      "description": "Coarse-grained outcome. 'warning' means produced output but with caveats (e.g. santa-method ESCALATE)."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 200,
+      "description": "Single-line human-readable result. Show this to the user; never show the whole envelope by default."
+    },
+    "next_actions": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^/[a-z][a-z0-9-]*( .*)?$",
+        "description": "Slash command + optional argument string. Must be runnable as-is."
+      },
+      "description": "Suggested next slash commands. Empty list means 'flow ends here'. Downstream skills MAY auto-invoke the first action when appropriate."
+    },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^architect-advisor/.+",
+            "description": "Path relative to project root, MUST live under architect-advisor/ (W0.3 layout). Absolute paths are forbidden — they break monorepo portability."
+          }
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(ADR|DECISION|AUDIT|DECOMP|PATTERN|PORTFOLIO)-[A-Za-z0-9-]+$"
+          }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Non-fatal caveats. santa-method's ESCALATE message goes here."
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Per-skill measurement payload (e.g. council vote counts, audit iteration count). Schema is open — consumers ignore unknown keys."
+    },
+    "lifecycle": {
+      "type": "object",
+      "description": "Used by arch-adr to expose state-machine info.",
+      "properties": {
+        "adr_status": { "enum": ["proposed", "accepted", "deprecated", "superseded"] },
+        "supersedes": { "type": "array", "items": { "type": "string" } },
+        "superseded_by": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "examples": [
+    {
+      "schema_version": "1.0",
+      "status": "success",
+      "summary": "Council 추천 = B (votes 3:1)",
+      "next_actions": ["/arch-adr 결정 기록"],
+      "artifacts": {
+        "files": ["architect-advisor/decisions/DECISION-2026-04-29-payment.md"],
+        "ids": ["DECISION-payment"]
+      },
+      "metrics": {
+        "votes": { "Architect": "B", "Skeptic": "B", "Pragmatist": "A", "Critic": "B" },
+        "confidence_avg": 0.78
+      }
+    },
+    {
+      "schema_version": "1.0",
+      "status": "warning",
+      "summary": "Audit ESCALATE at iter=3 — 인간 개입 필요",
+      "next_actions": [],
+      "artifacts": {
+        "files": ["architect-advisor/audits/AUDIT-2026-04-29-payment.md"],
+        "ids": ["AUDIT-payment"]
+      },
+      "warnings": ["santa-method failed to converge after 3 iterations"]
+    },
+    {
+      "schema_version": "1.0",
+      "status": "success",
+      "summary": "ADR-0023 생성 (supersedes ADR-0007)",
+      "next_actions": ["/arch-decompose 구현 단계 분해"],
+      "artifacts": {
+        "files": ["architect-advisor/adrs/0023-jwt-over-redis.md"],
+        "ids": ["ADR-0023"]
+      },
+      "lifecycle": {
+        "adr_status": "accepted",
+        "supersedes": ["ADR-0007"],
+        "superseded_by": null
+      }
+    }
+  ]
+}

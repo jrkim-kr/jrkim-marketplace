@@ -346,6 +346,32 @@ decompose의 결합 관계 분석을 **동적 관점**으로 다시 본다:
 
 ---
 
+## 출력 계약 (W3.2 통합 schema)
+
+모든 sub-skill은 다음 JSON envelope를 사용해 결과를 반환한다 (사용자 표시는 `summary` 한 줄 + 권장에 따라 `next_actions`):
+
+```json
+{
+  "schema_version": "1.0",
+  "status": "success | warning | error",
+  "summary": "한 줄 결과 (≤200자)",
+  "next_actions": ["/arch-adr 결정 기록", ...],
+  "artifacts": {
+    "files": ["architect-advisor/<...>"],
+    "ids": ["DECISION-<slug>", "ADR-0023", ...]
+  }
+}
+```
+
+규칙:
+- `next_actions`는 슬래시 명령어 + 인자 — 다음 sub-skill이 그대로 실행 가능
+- `artifacts.files`는 모두 `architect-advisor/`로 시작하는 상대 경로 — monorepo 이식성을 위해
+- ADR-specific은 `lifecycle: { adr_status, supersedes, superseded_by }` 추가
+- santa-method가 ESCALATE면 `status: warning` + `warnings: [...]` 추가
+- 검증: `python3 scripts/validate_skill_output.py <output.json>`
+
+스키마 정의: `schemas/skill-output.schema.json`. 변경 시 schema_version bump.
+
 ## 워크플로우 규칙
 
 1. **권장 순서**: `decompose → decision → adr → audit → portfolio`. 단, `adr ↔ audit`은 Evaluator-Optimizer 루프로 역방향 전환 가능하며, 방안 자체를 재검토해야 하면 decision으로 되돌아간다.

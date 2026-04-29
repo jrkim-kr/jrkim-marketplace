@@ -27,6 +27,68 @@ user-invokable: true
 >
 > `flush` 플러그인과 동일한 규칙. 이 스킬에서 `docs/errors/` 같은 경로를 하드코딩하지 말 것.
 
+## 자동 누적 모드 (W3.1)
+
+수동 호출 외에도, **PostToolUse hook**으로 ERR 작성 시점에 자동으로 candidate를 누적할 수 있다.
+
+### Hook 등록 (1회 설정)
+
+`~/.claude/settings.json`의 `hooks` 섹션에 다음을 추가:
+
+```json
+"PostToolUse": [
+  {
+    "matcher": "Write|Edit",
+    "hooks": [
+      {
+        "type": "command",
+        "command": "python3 /Users/jrkim/Projects/jrkim-marketplace/architect-advisor/scripts/err_pattern_observe.py 2>/dev/null || true",
+        "async": true,
+        "timeout": 10
+      }
+    ]
+  }
+]
+```
+
+훅 안전 특성:
+- **fire-and-forget**: 어떤 실패도 main thread를 막지 않음 (`2>/dev/null || true`)
+- **async**: 백그라운드 실행 → 편집 응답 시간 영향 없음
+- **filter**: ERR-*.md가 `<ERR_DIR>` 안에 있을 때만 작동, 아니면 즉시 silent exit
+
+### 누적 흐름
+
+```
+flush /flush 명령 → errors/ERR-NNN-*.md 작성
+        │
+        ▼ (PostToolUse hook 발동)
+err_pattern_observe.py
+        │
+        ├─ ERR doc 파싱 (Affected Modules + Root Cause)
+        ├─ architect-advisor/observations.jsonl 에 기록
+        └─ candidate 누적
+              │
+              ├─ confidence < 0.7 또는 1번만 관측 → patterns/candidates.jsonl 만 기록
+              └─ confidence ≥ 0.7 AND 동일 module pair가 2개 이상 ERR에서 출현
+                    → patterns/CONFLICT_PATTERNS.md 자동 promote
+```
+
+### 산출물
+
+```
+architect-advisor/
+├── observations.jsonl           ← 모든 ERR 관측 로그 (감사용)
+└── patterns/
+    ├── candidates.jsonl         ← 낮은 confidence pattern (대기열)
+    └── CONFLICT_PATTERNS.md     ← 정식 패턴 (writing-plans가 자동 참조)
+```
+
+monorepo 모드에서는 `architect-advisor/_shared/patterns/CONFLICT_PATTERNS.md` (모든 product 공유).
+
+### 수동과 자동 혼용
+
+수동 `/arch-err-pattern` 호출은 자동 hook을 끄지 않는다. 수동은 한 번에 전체 횡단 분석으로 더 정교한 패턴(병합·승격)을 수행하고, 자동 hook은 incremental observation만 한다.
+
 **Early exit**: ERR이 **5건 미만**이면 패턴 귀납 보류. "샘플 부족 — 최소 5건 누적 후 재실행" 안내만 출력하고 저장하지 않는다.
 
 ## 실행 흐름 (4단계)
