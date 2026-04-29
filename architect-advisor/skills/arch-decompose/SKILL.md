@@ -19,6 +19,46 @@ user-invokable: true
 
 ## 산출물
 
+### 0. Self-Contained Step YAML (W2.2 핵심 산출물)
+
+분해의 1차 산출물은 **자기완결적 step list**다. 각 step은 다른 step이나 본 대화 내용을 다시 읽지 않고도 fresh agent가 그대로 실행할 수 있어야 한다 (cold-start safe).
+
+```yaml
+- step_id: 1
+  title: 결제 게이트웨이 클라이언트 통합
+  title_zh: 集成支付网关客户端
+  deps: []                       # 선행 step의 step_id 배열
+  parallel_with: [2]             # 동시에 진행 가능한 step
+  model_tier: default            # default | strongest (고위험 step만 strongest)
+  context_brief:
+    problem: <한 단락 — 왜 이 step이 필요한가>
+    hard_constraints:
+      - <타협 불가 제약 1>
+      - <타협 불가 제약 2>
+    files_to_read:
+      - src/payment/types.ts
+      - architect-advisor/adrs/0007-payment-provider.md
+    related_adrs: [ADR-0007]
+    related_patterns: []         # CONFLICT_PATTERNS.md 매칭 시 자동 주입
+  acceptance_criteria:
+    - <검증 가능한 완료 조건 1>
+    - <검증 가능한 완료 조건 2>
+  verification:
+    - npm test src/payment
+    - grep -r "PaymentClient" src/ | wc -l   # 적어도 N개 호출 확인
+  rollback: <feature flag 또는 git revert 가이드>
+```
+
+**금지 사항** (cold-start safety):
+- `context_brief.problem`에 "앞에서 본 …", "이전 step에서 …" 같은 참조 표현 금지
+- `files_to_read`는 실재해야 함 (decompose 시점에 존재 검증)
+- `verification`은 명령으로 실행 가능해야 함 (산문 금지)
+- 의존 그래프는 DAG (순환 금지)
+
+**model_tier 가이드**:
+- `default`: 일반 CRUD/integration step
+- `strongest`: 분산 트랜잭션, 결제 정합성, 보안 경계, 마이그레이션처럼 한 번 잘못하면 되돌리기 어려운 step
+
 ### 1. 비즈니스 로직 토폴로지 다이어그램
 
 Mermaid 문법:

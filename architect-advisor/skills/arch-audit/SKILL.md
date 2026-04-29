@@ -54,13 +54,103 @@ decompose의 결합 관계를 **동적 관점**으로 다시 본다:
 2. 새로운 의존 방향이 순환 의존을 만들지 않는가?
 3. 한 모듈 장애 시 연쇄 장애 범위가 방안 A와 B에서 어떻게 다른가?
 
-## 감사 실행
+## 감사 실행 (Santa-Method 4-Phase, W2.1)
 
-각 시나리오에 대해 **자문자답(Self-Q&A)** 형식:
+ECC `santa-method`에서 영감을 받은 **이중 독립 reviewer + 수렴 루프** 패턴을 사용한다. 단일 agent의 자기 검증으로는 같은 사각지대를 공유하므로, **서로 보지 못하는 두 reviewer**를 동시에 띄워 모두 PASS해야 SHIP한다.
+
+### Phase 1 — Generate (감사 v1)
+
+도메인 라우팅 결과 + decompose 토폴로지 + 선택된 ADR을 입력으로 **risk_list_v1**을 생성한다. 각 시나리오에 대해 자문자답:
 
 1. **어떤 문제가 발생할 수 있는가?** — 구체적 시나리오 서술
 2. **현재 설계가 이 시나리오를 어떻게 처리하는가?** — 방어 메커니즘 검증
 3. **추가 보완이 필요한가?** — 구체적인 대응 방안 제시
+
+출력: `risk_list_vN` (N = 1, 2, 3, ...)
+
+### Phase 2 — Dual Independent Review
+
+`Task` 도구로 **2개 reviewer subagent**를 동시에 dispatch한다. 두 reviewer는 서로의 평가를 절대 보지 못한다.
+
+**Reviewer prompt 템플릿** (양쪽에 동일하게 사용):
+
+```
+ROLE: 독립 리스크 리뷰어. 당신은 다른 리뷰어의 평가를 본 적이 없다.
+
+DESIGN UNDER REVIEW:
+{현재 설계 요약 + ADR 링크 + decompose 토폴로지}
+
+RISK LIST (감사 결과):
+{risk_list_vN}
+
+RUBRIC (5축, 동일 기준):
+1. 단일 점장애(Single Point of Failure) — 한 노드가 죽으면 전체가 멈추나?
+2. 데이터 일관성(Consistency) — 분산 환경에서 정합성 보장 메커니즘?
+3. 보안 경계(Security Boundary) — 인증/권한/입력 검증 누락?
+4. 관측성(Observability) — 장애 시 추적·진단 가능한 로그·메트릭이 있나?
+5. 롤백 경로(Rollback Path) — 문제 발생 시 안전하게 되돌릴 수 있나?
+
+INSTRUCTIONS:
+- 각 축에 PASS / FAIL 판정 + 1줄 근거
+- 개선 제안은 출력하지 말 것 (이 단계는 결함 식별만)
+- 다른 리뷰어를 추측하지 말 것
+
+OUTPUT (JSON only):
+{
+  "rubric": {
+    "single_point_of_failure": { "verdict": "PASS"|"FAIL", "evidence": "..." },
+    "consistency":              { "verdict": "PASS"|"FAIL", "evidence": "..." },
+    "security_boundary":        { "verdict": "PASS"|"FAIL", "evidence": "..." },
+    "observability":            { "verdict": "PASS"|"FAIL", "evidence": "..." },
+    "rollback_path":            { "verdict": "PASS"|"FAIL", "evidence": "..." }
+  },
+  "overall": "PASS" | "FAIL",
+  "flags": ["...", "..."]
+}
+```
+
+**조건**: `overall = PASS` iff 5축 모두 PASS.
+
+### Phase 3 — Verdict Gate
+
+```
+both PASS  → SHIP (Phase 4 산출물 저장)
+한쪽이라도 FAIL  → 모든 flags를 합치고 Phase 1로 돌아가 risk_list_v(N+1) 생성
+```
+
+**합산 규칙**:
+- 두 reviewer가 같은 flag를 올렸다면 1회로 dedupe
+- 한 명만 올린 flag도 모두 보존 (보수적)
+- evidence는 두 reviewer의 인용을 모두 적재
+
+### Phase 4 — Fix Loop (수렴 루프)
+
+```
+iter = 1
+while iter < MAX_ITER (=3):
+    if both PASS: SHIP
+    else: 설계 수정 → risk_list_v(iter+1) → Phase 2 재호출
+    iter += 1
+
+if iter == MAX_ITER and not PASS:
+    ESCALATE — 모든 iteration의 diff와 잔여 flags를 그대로 보고하고 Chloe에게 인간 개입을 요청한다.
+    절대 silent ship 금지.
+```
+
+각 iteration마다 다음을 보존:
+- `risk_list_v1`, `risk_list_v2`, ...
+- 각 iteration의 두 reviewer verdict 전문
+- 설계 변경 diff
+
+최종 산출물에는 **모든 iteration chain**을 포함한다 (왜 v3까지 갔는지 설명 가능해야 함).
+
+### Cost-aware degradation
+
+비용 부담이 큰 경우 다음 단축 가능:
+- **Single reviewer 모드** (`--lite`): 한 명만 띄워 합의 대신 self-review. 단, ADR에 "santa-method skipped" 명시
+- **Rubric 축소**: 도메인이 명확하면 5축 중 관련 3축만 사용 (예: 인증 모듈은 SoF/Security/Observability)
+
+이 단축은 ADR에 표기되어야 하며, 추후 audit 재실행 시 full 모드로 복귀한다.
 
 ## 방안 재검토 제안 (Evaluator-Optimizer 루프)
 
@@ -79,25 +169,41 @@ decompose의 결합 관계를 **동적 관점**으로 다시 본다:
 
 Chloe가 승인하면 `/arch-decision`으로 돌아가고, 유지를 선택하면 보완 설계를 추가한 뒤 `/arch-portfolio`로 진행한다.
 
-## 산출물 저장 경로
+## 산출물 저장 경로 (W0.3 컨버전스)
 
-`architect-advisor/<project-slug>/audit/<도메인>.md`. Integration Risk는 별도 파일 `integration-risk.md`로 분리.
-
-```bash
-# 도메인별 감사
-cat <<'EOF' | python3 scripts/workflow-state.py save audit payment-audit
-# 결제 도메인 리스크 감사
-...시나리오별 Q&A...
-EOF
-
-# Integration Risk (다중 모듈 시스템 자동 적용)
-cat <<'EOF' | python3 scripts/workflow-state.py save audit integration-risk
-# Integration Risk 감사
-...10개 카테고리 + Blast Radius 재측정...
-EOF
+```
+architect-advisor/audits/
+├── AUDIT-YYYY-MM-DD-<slug>.md              ← 도메인별 감사 + 모든 iteration chain
+└── integration-risk-YYYY-MM-DD.md          ← Integration Risk (다중 모듈)
 ```
 
-감사 결과 요약은 **`/arch-adr`로 생성한 ADR의 `## Risk Audit` 섹션에도 append**한다. 리스크로 인해 방안이 수정되면 이전 방안과 변경 사유를 ADR에 함께 기록한다(역사 삭제 금지).
+monorepo 모드에서는 `architect-advisor/<product>/audits/`. 각 audit 파일에는 다음을 포함:
+
+```markdown
+# AUDIT: <설계명>
+
+**날짜**: YYYY-MM-DD
+**도메인**: 결제 / 인증 / ...
+**Santa-method 결과**: PASS at iter=2 (또는 ESCALATE at iter=3)
+
+## Iteration Chain
+### v1 → FAIL
+- Reviewer A: ...
+- Reviewer B: ...
+- 설계 수정: ...
+
+### v2 → PASS
+- Reviewer A: ...
+- Reviewer B: ...
+
+## 최종 발견 사항 (consolidated)
+...
+
+## ADR Risk Audit Append용 요약
+...
+```
+
+감사 결과 요약은 **`/arch-adr`로 생성한 ADR의 `## Risk Audit` 섹션에도 append**한다. 리스크로 인해 방안이 수정되면 이전 방안과 변경 사유를 ADR에 함께 기록한다(역사 삭제 금지). santa-method가 ESCALATE로 끝났다면 ADR `status: proposed`로 되돌린다.
 
 ## 완료 조건
 

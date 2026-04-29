@@ -1,7 +1,7 @@
 ---
 name: arch-err-pattern
-description: "architect-advisor 횡단 도구. `docs/errors/ERR-*.md`를 가로로 훑어 재발 충돌 패턴을 추출해 `CONFLICT_PATTERNS.md`를 생성한다. 다음 `writing-plans`가 자동 참조. 트리거: '패턴 추출', 'CONFLICT_PATTERNS', '冲突模式', 'extract conflict patterns'."
-argument-hint: "[error 디렉토리 경로 (기본 docs/errors/)] 또는 [프로젝트 슬러그]"
+description: "architect-advisor 횡단 도구. `<ERR_DIR>/ERR-*.md`를 가로로 훑어 재발 충돌 패턴을 추출해 `CONFLICT_PATTERNS.md`를 생성한다. ERR_DIR은 `.flushrc.json` → `find errors/` → `./errors/` 3단계로 자동 해석된다. 다음 `writing-plans`가 자동 참조. 트리거: '패턴 추출', 'CONFLICT_PATTERNS', '冲突模式', 'extract conflict patterns'."
+argument-hint: "[ERR 디렉토리 경로 (생략 시 자동 해석)] 또는 [프로젝트 슬러그]"
 user-invokable: true
 ---
 
@@ -15,10 +15,17 @@ user-invokable: true
 
 | 상황 | 효과 |
 |---|---|
-| `docs/errors/`에 ERR-*.md **5개 이상** 쌓였을 때 | 첫 패턴 추출, 기준선 확립 |
+| `<ERR_DIR>`에 ERR-*.md **5개 이상** 쌓였을 때 | 첫 패턴 추출, 기준선 확립 |
 | 신규 ERR 5건 추가 또는 월 1회 | 증분 업데이트 |
 | `writing-plans` 시작 전 | `CONFLICT_PATTERNS.md`를 읽어 task 수락 기준에 주입 (글로벌 CLAUDE.md §6 연동) |
 | 고위험 모듈 리팩터링 직전 | 해당 모듈 관련 과거 패턴 pre-flight 브리핑 |
+
+> **ERR_DIR 해석 규칙 (W0.1 단일 진실)**
+> 1. `.flushrc.json` 의 `errorDocDir` 필드
+> 2. `find . -type d -name "errors"` (node_modules/.git 제외)
+> 3. `./errors/` (기본값)
+>
+> `flush` 플러그인과 동일한 규칙. 이 스킬에서 `docs/errors/` 같은 경로를 하드코딩하지 말 것.
 
 **Early exit**: ERR이 **5건 미만**이면 패턴 귀납 보류. "샘플 부족 — 최소 5건 누적 후 재실행" 안내만 출력하고 저장하지 않는다.
 
@@ -29,8 +36,13 @@ user-invokable: true
 파싱은 Claude가 하지 않는다. 헬퍼 스크립트가 대신한다:
 
 ```bash
-python3 scripts/err_scan.py --dir docs/errors/ --summary   # 요약 먼저
-python3 scripts/err_scan.py --dir docs/errors/             # 전체 JSON
+# ERR_DIR을 별도 지정하지 않으면 .flushrc.json -> find errors/ -> ./errors/ 순으로 자동 해석.
+python3 scripts/err_scan.py --summary           # 요약 먼저
+python3 scripts/err_scan.py                     # 전체 JSON
+python3 scripts/err_scan.py --explain           # 어느 tier에서 해석됐는지만 확인
+
+# 강제 지정이 필요하면:
+python3 scripts/err_scan.py --dir custom/path/errors/
 ```
 
 스크립트 출력은 각 ERR의 구조화된 JSON + 모듈 공현 행렬 + 빈도 맵. 별칭 매핑(`근본 원인 ↔ Root Cause` 등)은 스크립트 내부에서 처리.
@@ -53,7 +65,7 @@ JSON을 받아 아래 규칙으로 패턴 도출:
 ```markdown
 # 충돌 패턴 분석 (Conflict Patterns)
 
-> 기반: docs/errors/ 하위 N개 ERR 문서 횡단 귀납
+> 기반: <ERR_DIR>/ 하위 N개 ERR 문서 횡단 귀납
 > 생성: YYYY-MM-DDThh:mm:ssZ | 모드: [신규 | 증분]
 
 ## Changelog
@@ -148,7 +160,7 @@ python3 scripts/workflow-state.py patterns-stat \
 
 ```
 🎯 지금 뭘 했나
-docs/errors/ 12개 ERR을 횡단 분석했습니다.
+<ERR_DIR>/ 12개 ERR을 횡단 분석했습니다.
 
 📌 핵심 결과
 - 정식 패턴 5개 (신규 3, 업데이트 2)
@@ -173,7 +185,7 @@ docs/errors/ 12개 ERR을 횡단 분석했습니다.
 ## 가드레일
 
 - **ERR < 5건**: 저장 없이 early exit
-- **빈 디렉토리**: "docs/errors/ 없음 또는 ERR-*.md 없음" 안내만
+- **빈 디렉토리**: "<ERR_DIR>/ 없음 또는 ERR-*.md 없음" 안내만
 - **파일명 계약**: 저장 파일명은 반드시 `CONFLICT_PATTERNS.md` — 글로벌 CLAUDE.md §6이 이 이름으로 검색한다. 소비자 계약을 따른다. 소문자/변형 금지.
 - **파싱 실패 ERR**: `missing_fields`가 있으면 "데이터 품질 비고" 섹션에 기록. 무시하지 말 것.
 

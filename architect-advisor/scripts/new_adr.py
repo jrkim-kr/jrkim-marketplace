@@ -147,7 +147,21 @@ def state_file_for(slug: str) -> Path:
 # ---------------------------------------------------------------------------
 
 def adr_dir_candidates(slug: str) -> list[str]:
+    """ADR directory candidates, ordered by preference (new layout first).
+
+    The W0.3 layout convergence prefers:
+      - single-product: architect-advisor/adrs/
+      - monorepo:       architect-advisor/<product>/adrs/
+
+    Legacy paths (architect-advisor/<slug>/adr, docs/adr, ...) are kept for
+    backward compatibility — if a project already uses one of them, we honour
+    it rather than forcing migration.
+    """
     return [
+        # W0.3 canonical layout
+        "architect-advisor/adrs",
+        f"architect-advisor/{slug}/adrs",
+        # Legacy / backward compatible
         f"architect-advisor/{slug}/adr",
         "docs/decisions",
         "adr",
@@ -188,7 +202,17 @@ def detect_adr_dir(slug: str, override: str | None) -> Path:
         p = REPO_ROOT / candidate
         if p.is_dir():
             return p
-    return project_root(slug) / "adr"
+    # No existing ADR directory — default to the W0.3 canonical layout
+    cfg_path = REPO_ROOT / ".architect-advisor.json"
+    if cfg_path.is_file():
+        try:
+            cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+            if cfg.get("monorepo"):
+                product = cfg.get("default_product") or (cfg.get("products") or [slug])[0]
+                return REPO_ROOT / "architect-advisor" / product / "adrs"
+        except (json.JSONDecodeError, OSError):
+            pass
+    return REPO_ROOT / "architect-advisor" / "adrs"
 
 
 def detect_strategy(adr_dir: Path, override: str | None) -> str:
@@ -421,6 +445,27 @@ def cmd_create(args, slug: str) -> dict:
     # state.steps.adr에 back-reference 기록
     record_adr_in_state(slug, state, target)
 
+    # supersede 양방향 링크 처리 (W1.2 lifecycle)
+    superseded_targets: list[str] = []
+    if args.supersedes:
+        new_adr_id = f"ADR-{num:04d}" if strategy == "numeric" else f"ADR-{slug_title}"
+        new_filename = filename
+        for raw in args.supersedes.split(","):
+            old_id = raw.strip()
+            if not old_id:
+                continue
+            if not old_id.upper().startswith("ADR-"):
+                old_id = f"ADR-{old_id}"
+            old_id = old_id.upper()
+            if mark_superseded(adr_dir, old_id, new_adr_id, new_filename):
+                superseded_targets.append(old_id)
+        if superseded_targets:
+            inject_supersedes_field(target, superseded_targets)
+            for old_id in superseded_targets:
+                old_filename = find_adr_filename(adr_dir, old_id)
+                if old_filename:
+                    update_index(adr_dir, old_filename, _read_adr_title(adr_dir / old_filename) or old_id, "superseded")
+
     return {
         "ok": True,
         "path": str(target.relative_to(REPO_ROOT)) if target.is_relative_to(REPO_ROOT) else str(target),
@@ -430,7 +475,95 @@ def cmd_create(args, slug: str) -> dict:
         "project_slug": slug,
         "index": str(index_path.relative_to(REPO_ROOT)) if index_path else None,
         "workflow_seed": bool((state.get("steps", {}).get("decision") or {}).get("decision")),
+        "supersedes": superseded_targets,
     }
+
+
+# ---------------------------------------------------------------------------
+# Supersede helpers (W1.2)
+# ---------------------------------------------------------------------------
+
+def find_adr_filename(adr_dir: Path, adr_id: str) -> str | None:
+    """Find the filename of an ADR by id (e.g. ADR-0007 -> 0007-foo.md)."""
+    m = re.match(r"ADR-(\d+)", adr_id, re.IGNORECASE)
+    if not m:
+        return None
+    num = int(m.group(1))
+    pattern = f"{num:04d}-*.md"
+    matches = sorted(adr_dir.glob(pattern))
+    if matches:
+        return matches[0].name
+    return None
+
+
+def _read_adr_title(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    for line in text.splitlines():
+        if line.startswith("# "):
+            title = line[2:].strip()
+            title = re.sub(r"^ADR-\d+:\s*", "", title)
+            return title
+    return None
+
+
+def mark_superseded(adr_dir: Path, old_adr_id: str, new_adr_id: str, new_filename: str) -> bool:
+    """Open the old ADR and set status: superseded + superseded_by link."""
+    fname = find_adr_filename(adr_dir, old_adr_id)
+    if fname is None:
+        sys.stderr.write(f"[new_adr] ⚠️  cannot find {old_adr_id} in {adr_dir} — skipping supersede link\n")
+        return False
+    target = adr_dir / fname
+    text = target.read_text(encoding="utf-8")
+
+    # Replace status line
+    text = re.sub(
+        r'^(\s*status:\s*)"?[^"\n]*"?',
+        rf'\1"superseded by [{new_adr_id}]({new_filename})"',
+        text,
+        count=1,
+        flags=re.MULTILINE,
+    )
+
+    # Insert/update superseded_by line in frontmatter (within first --- ... --- block)
+    fm_match = re.match(r"(---\n)([\s\S]*?)(\n---\n)", text)
+    if fm_match:
+        fm_body = fm_match.group(2)
+        if re.search(r"^superseded_by:", fm_body, re.MULTILINE):
+            fm_body = re.sub(
+                r"^superseded_by:.*$",
+                f"superseded_by: {new_adr_id}",
+                fm_body,
+                count=1,
+                flags=re.MULTILINE,
+            )
+        else:
+            fm_body = fm_body.rstrip() + f"\nsuperseded_by: {new_adr_id}"
+        text = fm_match.group(1) + fm_body + fm_match.group(3) + text[fm_match.end():]
+
+    target.write_text(text, encoding="utf-8")
+    sys.stderr.write(f"[new_adr] 🔗 marked {old_adr_id} superseded_by {new_adr_id}\n")
+    return True
+
+
+def inject_supersedes_field(new_adr_path: Path, old_adr_ids: list[str]) -> None:
+    """Add `supersedes: [...]` to the new ADR's frontmatter."""
+    text = new_adr_path.read_text(encoding="utf-8")
+    fm_match = re.match(r"(---\n)([\s\S]*?)(\n---\n)", text)
+    if not fm_match:
+        return
+    fm_body = fm_match.group(2)
+    line = f"supersedes: [{', '.join(old_adr_ids)}]"
+    if re.search(r"^supersedes:", fm_body, re.MULTILINE):
+        fm_body = re.sub(r"^supersedes:.*$", line, fm_body, count=1, flags=re.MULTILINE)
+    else:
+        fm_body = fm_body.rstrip() + f"\n{line}"
+    text = fm_match.group(1) + fm_body + fm_match.group(3) + text[fm_match.end():]
+    new_adr_path.write_text(text, encoding="utf-8")
 
 
 def cmd_bootstrap(args, slug: str) -> dict:
@@ -454,6 +587,10 @@ def main():
     p.add_argument("--strategy", choices=["numeric", "slug"], help="파일명 전략")
     p.add_argument("--force", action="store_true", help="기존 파일 덮어쓰기")
     p.add_argument("--bootstrap", action="store_true", help="디렉토리 + 인덱스만 생성")
+    p.add_argument(
+        "--supersedes",
+        help="이 ADR이 대체하는 기존 ADR ID (콤마로 여러 개). 예: ADR-0007,ADR-0011. 양방향 링크 자동 처리",
+    )
     p.add_argument("--json", action="store_true", help="JSON 출력")
     args = p.parse_args()
 

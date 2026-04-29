@@ -232,7 +232,7 @@ architect-advisor로 정리하면:
 **실행 순서**:
 
 1. **방안 확정 기록**: `python3 scripts/workflow-state.py decision b "<reason>"`로 결정 사유를 기록.
-2. **ADR 초안 생성**: `python3 scripts/new_adr.py --title "..." --status accepted`로 `architect-advisor/<slug>/adr/NNNN-<슬러그>.md`를 만든다. 템플릿: `references/adr-template.md`. Decision Outcome은 `workflow-state.json`의 `steps.decision.decision.reason`이 자동 주입. 디렉토리·번호링은 자동 탐지(`architect-advisor/<slug>/adr/` → `docs/decisions/` → `adr/` → `docs/adr/` → `decisions/`).
+2. **ADR 초안 생성**: `python3 scripts/new_adr.py --title "..." --status accepted`로 `architect-advisor/adrs/NNNN-<슬러그>.md`를 만든다(monorepo면 `architect-advisor/<product>/adrs/`). 템플릿: `references/adr-template.md`. Decision Outcome은 `workflow-state.json`의 `steps.decision.decision.reason`이 자동 주입. 디렉토리 자동 탐지 우선순위는 W0.3 컨버전스 레이아웃(`architect-advisor/adrs/` → `architect-advisor/<slug>/adrs/` → 레거시 `architect-advisor/<slug>/adr/` → `docs/decisions/` → `adr/` → `docs/adr/` → `decisions/`).
 3. **섹션 채우기**: 플레이스홀더를 decompose 토폴로지·decision 비교 결과로 채운다.
    - **Context**: decompose 토폴로지 링크와 트리거
    - **Decision Drivers**: decision 비교 테이블의 평가 항목
@@ -373,11 +373,11 @@ decompose의 결합 관계 분석을 **동적 관점**으로 다시 본다:
 
 ### 분리 skill: `/arch-err-pattern`
 
-`skills/arch-err-pattern/SKILL.md` — `docs/errors/ERR-*.md`를 횡단 분석해 재발 충돌 패턴을 추출, `architect-advisor/<project>/patterns/CONFLICT_PATTERNS.md`를 생성. `writing-plans`가 자동 참조.
+`skills/arch-err-pattern/SKILL.md` — `<ERR_DIR>/ERR-*.md`를 횡단 분석해 재발 충돌 패턴을 추출, `architect-advisor/<project>/patterns/CONFLICT_PATTERNS.md`를 생성. `writing-plans`가 자동 참조. ERR_DIR은 `.flushrc.json` → `find errors/` → `./errors/` 3단계 자동 해석 (W0.1).
 
 ### ADR 생성: `new_adr.py`
 
-`scripts/new_adr.py` — `architect-advisor/<slug>/adr/NNNN-<슬러그>.md`를 생성한다.
+`scripts/new_adr.py` — `architect-advisor/adrs/NNNN-<슬러그>.md`를 생성한다(monorepo면 `architect-advisor/<product>/adrs/`).
 
 주요 옵션:
 - `--title "..."` (필수), `--status proposed|accepted`

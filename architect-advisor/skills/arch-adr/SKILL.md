@@ -25,6 +25,71 @@ user-invokable: true
 - 이미 결정된 사안을 문서화하지 않은 채 구현이 진행되고 있어 사후에 ADR로 고정해야 할 때
 - 기존 ADR을 재검토(superseded/revisited)해야 할 때
 
+## ADR Lifecycle (W1.2 — 상태 머신)
+
+```
+┌──────────┐  user confirm  ┌──────────┐
+│ proposed │ ─────────────→ │ accepted │
+└──────────┘                └─────┬────┘
+                                  │
+                       ┌──────────┴──────────┐
+                       ▼                     ▼
+                ┌──────────────┐      ┌──────────────┐
+                │  deprecated  │      │  superseded  │ ──→ links to ADR-NNNN
+                └──────────────┘      └──────────────┘
+```
+
+| 상태 | 의미 | 전이 트리거 |
+|---|---|---|
+| **proposed** | 합의 전 초안. 코딩 에이전트는 따르지 않음 | `/arch-decision` 합의 확정 시 |
+| **accepted** | 현재 시행 중인 결정 | 기본값 |
+| **deprecated** | 더 이상 유효하지 않으나 대체 결정도 없음 (예: 기능 자체 제거) | 기능 제거 또는 사용 중단 |
+| **superseded** | 더 새로운 ADR로 대체됨. **반드시 `superseded_by` 양방향 링크** | 같은 주제에 대한 새 ADR 채택 시 |
+
+### Frontmatter 스키마
+
+ADR 파일은 다음 frontmatter를 필수 포함:
+
+```yaml
+---
+adr_id: 0023
+title: JWT over Redis Session
+title_zh: 用 JWT 替换 Redis Session
+status: accepted              # proposed | accepted | deprecated | superseded
+date: YYYY-MM-DD
+deciders: [Chloe, council]
+supersedes: [ADR-0007]        # 이 ADR이 대체한 과거 ADR (없으면 빈 배열)
+superseded_by: null           # 이 ADR을 대체한 새 ADR (superseded 상태일 때만 채움)
+related_errors: [ERR-0042]    # arch-err-pattern / flush와 양방향 링크
+related_terms: [JWT, Session] # term-glossary 자동 추출
+---
+```
+
+### Supersede 절차 (양방향 링크 강제)
+
+새 ADR이 기존 ADR을 대체할 때:
+
+1. 새 ADR의 frontmatter에 `supersedes: [ADR-0007]` 기재
+2. 기존 ADR (`ADR-0007`)의 frontmatter를 다음과 같이 수정:
+   - `status: superseded`
+   - `superseded_by: ADR-0023`
+3. `index README` 표를 갱신 (status 변경 반영)
+4. **두 파일을 같은 commit에 포함시킨다**. 한 쪽만 변경하면 lifecycle이 깨진다.
+
+### Index README
+
+`architect-advisor/adrs/README.md` (monorepo면 `architect-advisor/<product>/adrs/README.md`)는 `new_adr.py --bootstrap`이 생성한다. 매 ADR 작성 후 자동 갱신:
+
+```markdown
+# Architecture Decision Records
+
+| ADR | Title | Status | Date | Supersedes |
+|-----|-------|--------|------|-----------|
+| [0001](0001-...md) | ... | accepted | 2026-01-15 | — |
+| [0007](0007-...md) | Redis Session 채택 | superseded | 2026-02-01 | ADR-0023 |
+| [0023](0023-...md) | JWT over Redis Session | accepted | 2026-04-29 | ADR-0007 |
+```
+
 ## 언제 쓰지 않는가
 
 - 단순 스타일·내부 리팩터링 결정 — ADR 게이트는 핵심 비즈니스 로직(결제·인증·정산·데이터 일관성·외부 통합)에만 강제한다
@@ -40,9 +105,28 @@ user-invokable: true
 python3 scripts/workflow-state.py decision b "장기 확장성과 Saga 패턴 지원"
 ```
 
-### 2. ADR 초안 생성
+### 2. ADR 초안 생성 (사전 사용자 확인 필수)
 
-`new_adr.py`가 디렉토리·번호링·템플릿을 자동 처리한다. 디렉토리 자동 탐지 우선순위: `architect-advisor/<slug>/adr/` → `docs/decisions/` → `adr/` → `docs/adr/` → `decisions/`. 구버전 `phase3-adr/`, `phase2.5-adr/`가 남아 있으면 자동으로 `adr/`로 이름이 바뀐다.
+**원칙**: ADR 디렉토리(`architect-advisor/adrs/` 등)가 존재하지 않으면 자동 생성하지 않는다. 먼저 사용자에게 다음과 같이 명시적으로 확인을 받는다:
+
+```
+처음으로 ADR을 작성합니다. 다음 디렉토리를 생성해도 될까요?
+  • architect-advisor/adrs/             ← ADR 본문
+  • architect-advisor/adrs/README.md    ← 인덱스 표
+  • architect-advisor/adrs/template.md  ← 빈 템플릿 (수동 작성용)
+
+진행 [y/N]:
+```
+
+`y`를 받은 뒤에만 `--bootstrap`으로 생성한다.
+
+`new_adr.py`가 디렉토리·번호링·템플릿을 자동 처리한다. 디렉토리 자동 탐지 우선순위 (W0.3 컨버전스):
+
+1. `architect-advisor/adrs/` (단일 product 표준)
+2. `architect-advisor/<slug>/adrs/` (monorepo product별)
+3. 레거시: `architect-advisor/<slug>/adr/` → `docs/decisions/` → `adr/` → `docs/adr/` → `decisions/`
+
+구버전 `phase3-adr/`, `phase2.5-adr/`가 남아 있으면 자동으로 `adr/`로 이름이 바뀐다.
 
 ```bash
 python3 scripts/new_adr.py --title "Saga 패턴으로 결제 정합성 확보" --status accepted
@@ -52,9 +136,10 @@ python3 scripts/new_adr.py --title "Saga 패턴으로 결제 정합성 확보" -
 - `--project <name>` — 다중 프로젝트 환경에서 슬러그 강제 지정
 - `--dir <path>` — 디렉토리 강제 지정
 - `--strategy {numeric|slug}` — 파일명 전략 강제
-- `--bootstrap` — 디렉토리 + README 인덱스만 생성
+- `--bootstrap` — 디렉토리 + README 인덱스만 생성 (사용자 확인 후에만 호출)
+- `--supersedes ADR-NNNN[,ADR-MMMM]` — supersede 양방향 링크를 자동 처리
 
-생성 파일: `architect-advisor/<slug>/adr/NNNN-<슬러그>.md`. 템플릿: `../architect-advisor/references/adr-template.md` (MADR 4.0 + Implementation Plan + Verification).
+생성 파일: `architect-advisor/adrs/NNNN-<슬러그>.md` (또는 monorepo product별). 템플릿: `../architect-advisor/references/adr-template.md` (MADR 4.0 + Implementation Plan + Verification).
 
 ### 3. 섹션 채우기
 
@@ -95,7 +180,24 @@ python3 scripts/new_adr.py --title "Saga 패턴으로 결제 정합성 확보" -
 
 ## 산출물 저장 경로
 
-`architect-advisor/<project-slug>/adr/NNNN-<슬러그>.md`
+W0.3 컨버전스 레이아웃 (단일 product 기본):
+
+```
+architect-advisor/
+├── adrs/
+│   ├── README.md           ← 인덱스 표 (자동 갱신)
+│   ├── template.md         ← 수동 작성용 빈 템플릿
+│   └── NNNN-<슬러그>.md
+```
+
+monorepo 모드:
+
+```
+architect-advisor/
+├── shop/adrs/{README,template,NNNN-...}
+├── admin/adrs/{...}
+└── _shared/adrs/{...}      ← 여러 product에 영향을 미치는 ADR
+```
 
 `new_adr.py`가 생성 후 `workflow-state.json`의 `steps.adr`에 `adr_path`, `artifacts`, `completed_at`을 자동 기록한다.
 
