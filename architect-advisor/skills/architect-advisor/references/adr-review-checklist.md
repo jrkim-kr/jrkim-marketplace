@@ -1,6 +1,6 @@
 # ADR Agent-Readiness Checklist (adr 게이트)
 
-> architect-advisor decision에서 방안이 확정(拍板)된 직후, `new_adr.py`로
+> architect-advisor council에서 방안이 확정(拍板)된 직후, `new_adr.py`로
 > 생성한 ADR 초안이 **다음 코딩 에이전트가 질문 없이 바로 구현할 수 있는
 > 상태**인지 검증한다. audit(리스크 감사)로 진입하기 전의 마지막 게이트다.
 >
@@ -41,7 +41,7 @@
 - [ ] "더 나은 방식을 쓴다"가 아니라 "X를 Y 용도로 쓴다"처럼 실행 가능한가
 - [ ] 스코프 경계가 명확한가 — 포함/제외(non-goals) 모두
 - [ ] 제약이 가능하면 측정 가능한 수치로 표현되었는가 (예: "< 200ms p95")
-- [ ] decision 비교 테이블의 드라이버가 사유에 반영되었는가
+- [ ] council 비교 테이블의 드라이버가 사유에 반영되었는가
 
 ## Consequences (결과)
 
@@ -78,13 +78,13 @@
 
 - [ ] 전문용어가 인라인 번역 규칙을 따르는가 (`한국어(中文/English /발음/ — 비유)`)
 - [ ] decompose 토폴로지·상태 머신 결과가 Context/Decision Drivers에 반영되었는가
-- [ ] `workflow-state.json`의 `steps.decision.decision.reason`이 Decision Outcome에 반영되었는가
+- [ ] `workflow-state.json`의 `steps.council.decision.reason`이 Decision Outcome에 반영되었는가
 - [ ] Risk Audit 섹션이 비어있거나 플레이스홀더 상태로 준비되었는가 (audit 이후 append)
 - [ ] portfolio 산출물 링크 자리(More Information)가 준비되었는가
 
 ## 메타
 
-- [ ] Status가 올바른가 (신규 ADR은 보통 `proposed`, decision 확정 직후라면 `accepted`도 가능)
+- [ ] Status가 올바른가 (신규 ADR은 보통 `proposed`, council 확정 직후라면 `accepted`도 가능)
 - [ ] Date가 채워졌는가
 - [ ] decision-makers가 기재되었는가 (Chloe 외 필요한 오너 포함)
 - [ ] 제목이 **동사구**인가 (문제 서술 아님 — "결제 시스템" X, "Saga 패턴으로 결제 정합성 확보" O)
@@ -98,14 +98,14 @@
 
 - **전부 체크**: audit(리스크 감사)로 진입.
 - **1–3개 미체크**: Chloe와 갭 논의. 대부분 1분 내 보완 가능.
-- **4개 이상 미체크**: decompose 또는 decision으로 되돌아가 fuzzy 영역을 재분해한다.
+- **4개 이상 미체크**: decompose 또는 council로 되돌아가 fuzzy 영역을 재분해한다.
 
 ## Common Failure Modes (자주 발견되는 문제)
 
 | 증상 | 근본 원인 | 수정 방향 |
 |------|---------|---------|
 | "성능 향상"이 Consequence | 모호한 의도 | "어떤 지표를 얼마나, 무엇으로 측정?"을 물어 수치화 |
-| 방안이 1개뿐 | 이미 결정된 상태의 사후 문서화 | "무엇을 기각했고 왜?"를 decision 비교로 되돌려 받음 |
+| 방안이 1개뿐 | 이미 결정된 상태의 사후 문서화 | "무엇을 기각했고 왜?"를 council 비교로 되돌려 받음 |
 | Context가 솔루션 피치처럼 읽힘 | 문제 프레이밍 생략 | Context는 문제만, 해결책은 Decision으로 이동 |
 | Consequences가 긍정 일색 | 체리피킹 | "뭐가 어려워지나? 운영 비용은?"을 물어 Bad/Neutral 추가 |
 | "X를 쓴다"에 사유 없음 | 비교 없는 선정 | "왜 Y 대신 X?"로 비교 강제 |

@@ -35,20 +35,20 @@ Chloe처럼 **AI 아키텍트/시니어 PM으로 성장하려는 개발자**를 
 └───────────────────────────────────────────────────────────────┘
          ↕            ↕           ↕           ↕            ↕
    ┌──────────┐ ┌──────────┐ ┌─────────┐ ┌──────────┐ ┌──────────┐
-   │ decompose  │→│ decision  │→│adr│→│ audit  │→│ portfolio  │
+   │ decompose  │→│ council  │→│adr│→│ audit  │→│ portfolio  │
    │시스템 분해│ │의사결정   │ │ADR 기록 │ │리스크 감사│ │커리어 자산│
    └──────────┘ └──────────┘ └─────────┘ └──────────┘ └──────────┘
    Chaining      Evaluator-   Persistence Routing      Chaining
                  Optimizer    (agent spec) (6 domains)
                       ↑___________________|
-                      (재검토 루프 시 decision으로 회귀)
+                      (재검토 루프 시 council으로 회귀)
 ```
 
 | 패턴 | 적용 위치 | 역할 |
 |------|----------|------|
-| **Prompt Chaining** | decompose → decision → adr → audit → portfolio | 순차 실행 + 체크포인트 게이트 |
+| **Prompt Chaining** | decompose → council → adr → audit → portfolio | 순차 실행 + 체크포인트 게이트 |
 | **Parallelization** | 용어 횡단 레이어 | 모든 step에서 용어를 병렬 수집/번역 |
-| **Evaluator-Optimizer** | decision ↔ 3 | 리스크가 방안을 뒤집을 수 있는 피드백 루프 |
+| **Evaluator-Optimizer** | council ↔ 3 | 리스크가 방안을 뒤집을 수 있는 피드백 루프 |
 | **Persistence** | adr (ADR) | 결정을 "에이전트가 읽어 실행할 수 있는 스펙"으로 고정 |
 | **Routing** | audit 도메인 감사 | 결제/실시간/재고/인증/통합/범용별 맞춤 시나리오 |
 
@@ -61,7 +61,7 @@ architect-advisor/
 ├── SKILL.md                          # 메인 스킬 (5단계 하이브리드 워크플로우)
 ├── skills/
 │   ├── arch-decompose/SKILL.md       # decompose 독립 호출
-│   ├── arch-council/SKILL.md        # decision 독립 호출
+│   ├── arch-council/SKILL.md        # council 독립 호출
 │   ├── arch-audit/SKILL.md           # audit 독립 호출
 │   ├── arch-portfolio/SKILL.md       # portfolio 독립 호출
 │   └── term-glossary/SKILL.md        # /term-glossary 독립 호출
@@ -87,7 +87,7 @@ architect-advisor/
         ├── state/
         │   └── workflow.json         # step 전환/결정/용어 누적 기록
         ├── decompose/         # 토폴로지, 상태 머신, Blast Radius
-        ├── decision/          # 방안 비교 테이블, 추천 근거
+        ├── council/          # 방안 비교 테이블, 추천 근거
         ├── adr/             # NNNN-title.md ADR 파일 (MADR 4.0)
         ├── audit/             # 도메인별 리스크 시나리오 & 대응
         ├── portfolio/         # STAR 케이스, 면접 요약, 회고
@@ -104,7 +104,7 @@ architect-advisor/
     │         ▼
     │    ┌─────────────────┐
     │    │ SKILL.md (메인)      │──→ workflow-state.py (상태 기록)
-    │    │ decompose → decision → adr → audit → portfolio   │──→ new_adr.py (adr 생성)
+    │    │ decompose → council → adr → audit → portfolio   │──→ new_adr.py (adr 생성)
     │    │                     │──→ 용어 횡단 레이어 (인라인)
     │    └─────────────────────┘
     │         │ portfolio 완료 시
@@ -173,9 +173,9 @@ architect-advisor/
 **체크포인트에서 할 수 있는 것**:
 - "노드 X를 분리해 줘" → 토폴로지 수정
 - "상태 Y를 추가해 줘" → 상태 머신 수정
-- "괜찮아, 다음으로" → decision 진행
+- "괜찮아, 다음으로" → council 진행
 
-### decision: 의사결정 & 트레이드오프
+### council: 의사결정 & 트레이드오프
 
 **산출물**:
 - 방안 A(MVP) vs 방안 B(견고한 아키텍처) 비교 테이블
@@ -191,12 +191,12 @@ architect-advisor/
 
 ### adr: ADR 기록 (에이전트 가독 스펙)
 
-**트리거**: decision 확정(拍板) 직후 자동
+**트리거**: council 확정(拍板) 직후 자동
 
-**역할**: decision의 결정을 **코딩 에이전트가 추가 질문 없이 바로 구현**할 수 있는 실행 스펙(executable spec)으로 고정한다. MADR 4.0 기반 ADR 파일을 `architect-advisor/<project>/adr/NNNN-title.md` 형식으로 생성한다.
+**역할**: council의 결정을 **코딩 에이전트가 추가 질문 없이 바로 구현**할 수 있는 실행 스펙(executable spec)으로 고정한다. MADR 4.0 기반 ADR 파일을 `architect-advisor/<project>/adr/NNNN-title.md` 형식으로 생성한다.
 
 **산출물**:
-- ADR 파일 (status / decision-makers / consulted / informed 메타데이터 포함)
+- ADR 파일 (status / council-makers / consulted / informed 메타데이터 포함)
 - Implementation Plan (영향 경로, 의존성, 따라야 할 패턴, 피해야 할 패턴, 설정 변경, 마이그레이션 절차)
 - Verification (에이전트가 테스트·grep·명령어로 확인 가능한 체크리스트)
 
@@ -228,10 +228,10 @@ python3 scripts/new_adr.py "결제 시스템에 Saga 패턴 도입"
 ```
 ⚠️ 방안 재검토 제안
 audit 결과, 방안 A가 [시나리오 X]를 구조적으로 해결하지 못합니다.
-decision으로 돌아가서 재검토할까요?
+council으로 돌아가서 재검토할까요?
 ```
 
-- "decision으로 돌아가자" → 방안 재선택
+- "council으로 돌아가자" → 방안 재선택
 - "이대로 가되 보완해 줘" → 보완 설계 추가 후 portfolio 진행
 
 ### portfolio: 커리어 자산 자동화
@@ -302,15 +302,15 @@ architect-advisor 워크플로우 실행 시, 각 step 전환마다 자동으로
 ```json
 {
   "project": "결제시스템",
-  "current_step": "decision",
+  "current_step": "council",
   "steps": {
     "decompose": { "status": "completed", "started_at": "...", "completed_at": "..." },
-    "decision": { "status": "in_progress", "decision": null },
+    "council": { "status": "in_progress", "decision": null },
     "audit": { "status": "pending", "domain": null, "feedback_loop_count": 0 },
     "portfolio": { "status": "pending" }
   },
   "terms": [
-    { "korean": "멱등성", "english": "Idempotency", "chinese": "幂等性", "steps": ["decompose", "decision"] }
+    { "korean": "멱등성", "english": "Idempotency", "chinese": "幂等性", "steps": ["decompose", "council"] }
   ]
 }
 ```
@@ -323,7 +323,7 @@ architect-advisor 워크플로우 실행 시, 각 step 전환마다 자동으로
 | `python3 scripts/workflow-state.py show` | 현재 상태 전체 출력 |
 | `python3 scripts/workflow-state.py terms` | 수집된 용어 목록만 출력 |
 | `python3 scripts/workflow-state.py step <name> completed` | step 수동 완료 처리 |
-| `python3 scripts/workflow-state.py decision b "이유"` | 방안 확정 기록 |
+| `python3 scripts/workflow-state.py council b "이유"` | 방안 확정 기록 |
 | `python3 scripts/workflow-state.py reset` | 상태 초기화 |
 
 ### 상태 파일 위치
@@ -378,7 +378,7 @@ python3 scripts/notion-term-sync.py --db-id <DB_ID> --step <name>
 **类比**: ...
 **技术定义**: ...
 
-**등장 Step**: decompose, decision
+**등장 Step**: decompose, council
 ```
 
 ---
@@ -401,7 +401,7 @@ python3 scripts/notion-term-sync.py --db-id <DB_ID> --step <name>
 재고가 마이너스로 가는 버그가 있어. 아키텍처를 다시 잡아줘.
 ```
 
-→ decompose에서 현재 문제의 토폴로지를 분석하고, decision에서 해결 방안 비교, audit에서 Race Condition 등 동시성 시나리오 집중 감사.
+→ decompose에서 현재 문제의 토폴로지를 분석하고, council에서 해결 방안 비교, audit에서 Race Condition 등 동시성 시나리오 집중 감사.
 
 ### 시나리오 3: 면접 준비만 하고 싶을 때
 
@@ -435,7 +435,7 @@ python3 scripts/notion-term-sync.py --db-id <DB_ID> --step <name>
 
 → 중국어 입력이지만 한국어로 출력. 전문용어는 한/중/영 3개 국어 병기.
 
-### 시나리오 7: decision에서 결정을 못 내리겠을 때
+### 시나리오 7: council에서 결정을 못 내리겠을 때
 
 ```
 두 방안의 차이가 잘 안 와닿아. 좀 더 구체적으로 설명해 줘.
@@ -449,7 +449,7 @@ python3 scripts/notion-term-sync.py --db-id <DB_ID> --step <name>
 방안 A를 선택했는데, 감사 결과를 보니 방안 B가 나을 것 같아. 돌아가자.
 ```
 
-→ Evaluator-Optimizer 루프 작동. decision으로 돌아가서 방안 B 기준으로 재설계.
+→ Evaluator-Optimizer 루프 작동. council으로 돌아가서 방안 B 기준으로 재설계.
 
 ---
 
@@ -491,7 +491,7 @@ python3 scripts/workflow-state.py show
 ```
 → 현재 step와 수집된 용어를 확인하고, 이어서 진행 요청:
 ```
-decision까지 했었어. 결제 시스템 설계 이어서 해줘.
+council까지 했었어. 결제 시스템 설계 이어서 해줘.
 ```
 
 ### Q: audit 시나리오가 내 도메인과 안 맞아요
@@ -507,7 +507,7 @@ decision까지 했었어. 결제 시스템 설계 이어서 해줘.
 ```
 코드 금지 해제해 줘. 의사코드가 아니라 실제 코드로 보여줘.
 ```
-→ decision 확정 후에는 코드 출력 가능. 확정 전이라면 왜 로직 우선인지 설명 후, 강하게 요청하면 해제.
+→ council 확정 후에는 코드 출력 가능. 확정 전이라면 왜 로직 우선인지 설명 후, 강하게 요청하면 해제.
 
 ### Q: 용어 정리가 너무 길어요
 

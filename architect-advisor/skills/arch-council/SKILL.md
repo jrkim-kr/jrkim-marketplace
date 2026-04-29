@@ -131,7 +131,7 @@ cat > architect-advisor/decisions/DECISION-$(date +%Y-%m-%d)-<slug>.md <<EOF
 EOF
 
 # workflow-state에 기록
-python3 scripts/workflow-state.py decision b "<reason>"
+python3 scripts/workflow-state.py council b "<reason>"
 ```
 
 ## 비용 절감 옵션
@@ -156,7 +156,9 @@ W0.3 컨버전스 레이아웃:
 - 단일 product: `architect-advisor/decisions/DECISION-YYYY-MM-DD-<slug>.md`
 - monorepo: `architect-advisor/<product>/decisions/DECISION-...md`
 
-비교 자체는 `architect-advisor/<slug>/decision/comparison.md`에도 보존(레거시 호환).
+비교 자체는 `architect-advisor/<slug>/council/comparison.md`에도 보존(워크플로우 step 산출물).
+
+> **명명 주의**: 단수 `<slug>/council/`은 council step의 작업 디렉토리(비교표·추천 근거). 복수 `decisions/`는 합의된 결과(DECISION-* 기록)의 모음. 작업 과정과 최종 기록을 디렉토리 이름으로 구분한다.
 
 ## 완료 조건
 
@@ -168,7 +170,7 @@ Phase 3까지 끝나면 Chloe가 방안을 **선택("확정/拍板")**할 때까
 
 - ADR 작성: `/arch-adr "..."` (체크리스트 게이트 포함, council의 `key_dissent`가 자동 주입)
 - 수동 생성: `python3 scripts/new_adr.py --title "..." --status accepted`
-- 전체 실행: `/architect-advisor` — decompose → decision → adr → audit → portfolio
+- 전체 실행: `/architect-advisor` — decompose → council → adr → audit → portfolio
 
 ## 입력 컨텍스트
 

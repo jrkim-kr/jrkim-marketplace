@@ -11,7 +11,7 @@
 > **"로직이 먼저, 코드는 나중에"** — 비즈니스 결정을 에이전트가 바로 구현할 수 있는 **실행 가능 스펙(executable spec)** 으로 고정하고, 모든 산출물을 `architect-advisor/<project>/` 아래에 누적해 다음 프로젝트에 **복리 효과(compound learning)** 를 만든다.
 
 아키텍처 패턴 3종 조합 (Anthropic Agent Patterns):
-- **Prompt Chaining**: decompose → decision → adr → audit → portfolio 순차 체인
+- **Prompt Chaining**: decompose → council → adr → audit → portfolio 순차 체인
 - **Parallelization**: 용어 번역 레이어(횡단 관심사)가 모든 step와 동시 동작
 - **Evaluator-Optimizer**: adr ↔ audit 피드백 루프
 
@@ -51,7 +51,7 @@
 | **Chloe 개입 빈도** | **높음** (도메인 지식 필요) |
 | **스킵 가능?** | ❌ — 이후 모든 step의 기반 |
 
-### decision — 의사결정 & 트레이드오프 (Decision)
+### council — 의사결정 & 트레이드오프 (Decision)
 
 | 항목 | 내용 |
 |---|---|
@@ -59,7 +59,7 @@
 | **목표** | Chloe가 수치 기반으로 "拍板(확정)"할 수 있게 함 |
 | **핵심 로직** | 두 방안 제시 → 평가 항목별 비교표 → 아키텍트 추천 → 필수 감사(멱등성·데이터 일관성) |
 | **입력** | decompose 산출물 + 비즈니스 제약(시간·팀·예산) |
-| **산출물** | `decision/comparison.md` (비교표 + 추천 근거) |
+| **산출물** | `council/comparison.md` (비교표 + 추천 근거) |
 | **체크포인트** | Chloe의 명시적 확정(拍板). **확정 전까지 코드 금지** |
 | **Chloe 개입 빈도** | **매우 높음** (결정권자) |
 | **스킵 가능?** | ❌ — 핵심 단계 |
@@ -68,10 +68,10 @@
 
 | 항목 | 내용 |
 |---|---|
-| **목적** | decision 결정을 **에이전트가 바로 구현 가능한 실행 스펙**으로 고정 |
+| **목적** | council 결정을 **에이전트가 바로 구현 가능한 실행 스펙**으로 고정 |
 | **목표** | 다음 코딩 에이전트가 추가 질문 없이 Implementation Plan 따라 코드 작성 가능 |
 | **핵심 로직** | MADR 4.0 템플릿 + Implementation Plan(affected paths·deps·patterns·verification) + 양방향 링크 |
-| **입력** | decision 확정안, `workflow.json`의 `steps.decision.decision.reason` |
+| **입력** | council 확정안, `workflow.json`의 `steps.council.decision.reason` |
 | **산출물** | `adr/NNNN-<슬러그>.md` + `README.md` 인덱스. state의 `steps.adr.adr_path`에 back-ref |
 | **체크포인트** | `adr-review-checklist.md` 통과(✅ 통과 / ⚠️ 갭 / 권고 3줄 요약) |
 | **Chloe 개입 빈도** | 낮음 (체크리스트 승인만) |
@@ -83,7 +83,7 @@
 | 항목 | 내용 |
 |---|---|
 | **목적** | 극단적 상황을 시뮬레이션하여 **런타임 취약점**을 사전 발견 |
-| **목표** | 방안이 구조적 리스크를 해결하는지 검증. 안 되면 decision으로 복귀 (Evaluator-Optimizer 루프) |
+| **목표** | 방안이 구조적 리스크를 해결하는지 검증. 안 되면 council로 복귀 (Evaluator-Optimizer 루프) |
 | **핵심 로직** | 도메인 라우팅(6종) → 시나리오별 Self-Q&A → 방안 검증 → 보완 설계 제안 |
 | **입력** | adr + decompose의 결합 관계 |
 | **산출물** | `audit/<도메인>-audit.md`, `integration-risk.md` + ADR의 `## Risk Audit` 섹션 append |
@@ -133,8 +133,8 @@ API 계약 깨짐 · 이벤트 순서·중복·유실 · 공유 리소스 경합
 
 | 원칙 | 이유 |
 |---|---|
-| decompose부터 시작 | 요구사항 모호할 때 decision 직행하면 비교가 straw man 됨 |
-| 확정 전 코드 금지 | decision 체크포인트 뚫리면 되돌리기 비용 10배 |
+| decompose부터 시작 | 요구사항 모호할 때 council 직행하면 비교가 straw man 됨 |
+| 확정 전 코드 금지 | council 체크포인트 뚫리면 되돌리기 비용 10배 |
 | ADR은 핵심 로직만 | 스타일·리팩터링까지 ADR 쓰면 피로도 폭증 |
 | 전문용어는 비유 먼저 | 비전공자 독자가 이해 못하면 ADR이 executable spec 역할 못함 |
 | 다중 모듈 시스템은 Integration Risk 항상 | 정적 결합 분석으론 동적 충돌 못 잡음 |
@@ -146,7 +146,7 @@ API 계약 깨짐 · 이벤트 순서·중복·유실 · 공유 리소스 경합
 
 | 안티패턴 | 대안 |
 |---|---|
-| decision에서 방안 1개만 제시 | 최소 2개 비교 (straw man 금지) |
+| council에서 방안 1개만 제시 | 최소 2개 비교 (straw man 금지) |
 | "성능 향상" 같은 모호한 Verification | "p95 < 200ms, 100 concurrent requests" 수치화 |
 | ADR Implementation Plan에 "DB 코드 수정" | 실제 파일 경로(`src/db/client.ts`)까지 명시 |
 | audit 스킵하고 portfolio로 점프 | 감사 없는 포트폴리오는 면접에서 역풍 |
@@ -176,7 +176,7 @@ API 계약 깨짐 · 이벤트 순서·중복·유실 · 공유 리소스 경합
     └── <project-slug>/
         ├── state/workflow.json    # step 전환·결정·용어
         ├── decompose/      # 토폴로지, 상태머신, 결합
-        ├── decision/       # 비교표, 추천
+        ├── council/        # 비교표, 추천
         ├── adr/          # NNNN-*.md + README 인덱스
         ├── audit/          # 도메인별 감사, integration-risk
         ├── portfolio/      # STAR, 면접, 회고
@@ -193,7 +193,7 @@ python3 scripts/workflow-state.py init "결제시스템"
 python3 scripts/workflow-state.py step <name> completed
 
 # 방안 확정 기록
-python3 scripts/workflow-state.py decision b "Saga로 정합성 확보"
+python3 scripts/workflow-state.py council b "Saga로 정합성 확보"
 
 # ADR 생성 (adr)
 python3 scripts/new_adr.py --title "Saga로 결제 정합성 확보" --status accepted
@@ -224,7 +224,7 @@ python3 scripts/notion-term-sync.py --db-id <ID> --export-only
 ### step 종료 자문 체크리스트
 
 - **decompose**: 노드·상태·결합 3가지 Chloe 확인?
-- **decision**: 방안 2개 + 평가 항목별 비교 + 수치 근거?
+- **council**: 방안 2개 + 평가 항목별 비교 + 수치 근거?
 - **adr**: agent-readiness 체크리스트 통과? 갭은 보완 or decompose/2 복귀
 - **audit**: 도메인 판별 + 치명 시나리오 대응 + Integration Risk 커버?
 - **portfolio**: STAR·면접·용어집·회고 4종 + 재방문 트리거 명시?

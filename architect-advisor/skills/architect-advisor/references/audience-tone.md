@@ -87,7 +87,7 @@
 | Step | 톤 강도 | 포인트 |
 |---|---|---|
 | decompose | 가장 쉬운 톤 | 전체 그림이 낯설 수 있으니 비유로 배경 설명 |
-| decision | 중간 | 비교표는 **평가 항목명만** 전문용어 허용, 본문은 풀어쓰기 |
+| council | 중간 | 비교표는 **평가 항목명만** 전문용어 허용, 본문은 풀어쓰기 |
 | adr | 중간 | ADR 본문은 에이전트용이라 약간 더 기술적이어도 OK. 단 Chloe 보고 요약은 쉬운 톤. |
 | audit | 쉬운 톤 | 리스크 시나리오는 "~하면 어떻게 될까?" 질문으로 시작 |
 | portfolio | 가장 정교한 톤 | 면접 답변 자산이므로 전문성 유지 (단 30초 요약의 한국어 버전은 면접관 톤) |
@@ -96,7 +96,7 @@
 
 ### ❌ Before
 
-> decision 결과, Saga 패턴(Saga Pattern)을 적용하여 distributed transaction을
+> council 결과, Saga 패턴(Saga Pattern)을 적용하여 distributed transaction을
 > 처리하고 Outbox 패턴으로 at-least-once delivery를 보장하는 것이 적절하다고
 > 판단됩니다. 이는 eventual consistency 모델 하에서 idempotency key 기반의
 > 중복 제거와 조합하여 금전 정합성을 확보할 수 있습니다.

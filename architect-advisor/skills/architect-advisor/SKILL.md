@@ -98,11 +98,11 @@ architect-advisor로 정리하면:
 
 ## 아키텍처 패턴: Prompt Chaining + Parallelization + Evaluator-Optimizer
 
-이 skill은 Anthropic의 에이전트 설계 패턴 3가지를 조합한 하이브리드 구조다. 기본 흐름은 `decompose → decision → adr ↔ audit → portfolio`이고, 용어 번역 레이어는 모든 skill과 병렬로 동작한다.
+이 skill은 Anthropic의 에이전트 설계 패턴 3가지를 조합한 하이브리드 구조다. 기본 흐름은 `decompose → council → adr ↔ audit → portfolio`이고, 용어 번역 레이어는 모든 skill과 병렬로 동작한다.
 
 - **Prompt Chaining**: 권장 순서를 따라 skill을 연속 실행, 각 skill 사이에 체크포인트
 - **Parallelization**: 용어 번역 레이어가 모든 skill과 병렬로 동작 (인라인 번역 + 누적 용어집)
-- **Evaluator-Optimizer**: adr ↔ audit 간 피드백 루프. 감사 결과가 ADR에 append되고 방안 재검토가 필요하면 decision으로 되돌아간다.
+- **Evaluator-Optimizer**: adr ↔ audit 간 피드백 루프. 감사 결과가 ADR에 append되고 방안 재검토가 필요하면 council로 되돌아간다.
 - **Routing**: audit에서 도메인(결제/채팅/재고 등)에 따라 감사 시나리오를 동적 선택
 - **Agent-First Documentation**: adr이 생성한 ADR은 다음 코딩 에이전트가 질문 없이 구현 가능한 executable spec 역할 (adr-skill 철학 차용)
 
@@ -114,14 +114,14 @@ architect-advisor로 정리하면:
 |---|---|---|
 | 상태 | `architect-advisor/<project>/state/workflow.json` | 워크플로우 진행 상태, 용어, 결정 |
 | decompose | `architect-advisor/<project>/decompose/` | `topology.md`, `state-machine.md`, `coupling.md` |
-| decision | `architect-advisor/<project>/decision/` | `comparison.md` |
+| council | `architect-advisor/<project>/council/` | `comparison.md` |
 | adr | `architect-advisor/<project>/adr/` | `NNNN-<슬러그>.md`, `README.md` (인덱스) |
 | audit | `architect-advisor/<project>/audit/` | `<도메인>-audit.md`, `integration-risk.md` |
 | portfolio | `architect-advisor/<project>/portfolio/` | `star-case.md`, `interview-30s.md`, `retrospective.md` |
 | — | `architect-advisor/<project>/glossary/` | `glossary.md` (누적 용어집) |
 | — | `architect-advisor/<project>/patterns/` | `CONFLICT_PATTERNS.md` (`/arch-err-pattern` 산출물) |
 
-**구버전 호환**: `phase1-decompose/`, `phase2.5-adr/` 등 옛 디렉토리가 남아 있으면 `workflow-state.py`/`new_adr.py`가 자동 감지·이름 변경한다. 옛 state 파일의 `phases.*` 키도 `steps.*`로 자동 이관된다.
+**구버전 호환**: `decision/` (arch-council 도입 이전 명칭)이나 `phase1-decompose/`, `phase2.5-adr/` 등 옛 디렉토리가 남아 있으면 `workflow-state.py`/`new_adr.py`가 자동 감지·이름 변경한다. 옛 state 파일의 `phases.*` 키와 `steps.decision`도 자동 이관된다.
 
 ---
 
@@ -154,14 +154,14 @@ architect-advisor로 정리하면:
 **기술 정의**: 동일한 연산을 여러 번 수행해도 결과가 변하지 않는 성질.
 **이 프로젝트에서의 적용**: 결제 요청이 네트워크 문제로 재전송되더라도
 중복 결제가 발생하지 않도록 요청마다 고유 키를 부여한다.
-**등장 Step**: decision (필수 감사 항목), audit (네트워크 지터 시나리오)
+**등장 Step**: council (필수 감사 항목), audit (네트워크 지터 시나리오)
 
 #### 中文说明
 **类比**：就像电梯按钮按10次也只会响应一次。
 **技术定义**：同一操作执行多次，结果与执行一次完全相同的特性。
 **在本项目中的应用**：即使支付请求因网络问题被重复发送，
 也通过为每个请求分配唯一密钥来防止重复支付。
-**出现步骤**：decision（必审项）、audit（网络抖动场景）
+**出现步骤**：council（必审项）、audit（网络抖动场景）
 ```
 
 작성 원칙:
@@ -190,7 +190,7 @@ architect-advisor로 정리하면:
 
 ---
 
-## decision: 의사결정 & 트레이드오프
+## council: 의사결정 & 트레이드오프
 
 **목표**: 핵심 로직에 대해 두 가지 방안을 비교하고, 아키텍트로서 추천안을 제시한다. 단독 호출은 `/arch-council`.
 
@@ -217,7 +217,7 @@ architect-advisor로 정리하면:
    - **멱등성(Idempotency /ˌaɪ.dəmˈpoʊ.tən.si/)**: 같은 요청을 여러 번 보내도 결과가 동일한가?
    - **데이터 일관성(Data Consistency)**: 분산 환경에서 데이터가 어긋나지 않는가?
 
-**산출물 저장**: 비교 테이블과 추천 근거를 `python3 scripts/workflow-state.py save decision comparison`(stdin)로 `comparison.md`에 기록.
+**산출물 저장**: 비교 테이블과 추천 근거를 `python3 scripts/workflow-state.py save council comparison`(stdin)로 `comparison.md`에 기록.
 
 **체크포인트**: Chloe가 방안을 선택("확정/拍板")할 때까지 기다린다. **확정 전까지 구체적인 코드를 작성하지 않는다.**
 
@@ -231,14 +231,14 @@ architect-advisor로 정리하면:
 
 **실행 순서**:
 
-1. **방안 확정 기록**: `python3 scripts/workflow-state.py decision b "<reason>"`로 결정 사유를 기록.
-2. **ADR 초안 생성**: `python3 scripts/new_adr.py --title "..." --status accepted`로 `architect-advisor/adrs/NNNN-<슬러그>.md`를 만든다(monorepo면 `architect-advisor/<product>/adrs/`). 템플릿: `references/adr-template.md`. Decision Outcome은 `workflow-state.json`의 `steps.decision.decision.reason`이 자동 주입. 디렉토리 자동 탐지 우선순위는 W0.3 컨버전스 레이아웃(`architect-advisor/adrs/` → `architect-advisor/<slug>/adrs/` → 레거시 `architect-advisor/<slug>/adr/` → `docs/decisions/` → `adr/` → `docs/adr/` → `decisions/`).
-3. **섹션 채우기**: 플레이스홀더를 decompose 토폴로지·decision 비교 결과로 채운다.
+1. **방안 확정 기록**: `python3 scripts/workflow-state.py council b "<reason>"`로 결정 사유를 기록.
+2. **ADR 초안 생성**: `python3 scripts/new_adr.py --title "..." --status accepted`로 `architect-advisor/adrs/NNNN-<슬러그>.md`를 만든다(monorepo면 `architect-advisor/<product>/adrs/`). 템플릿: `references/adr-template.md`. Decision Outcome은 `workflow-state.json`의 `steps.council.decision.reason`이 자동 주입. 디렉토리 자동 탐지 우선순위는 W0.3 컨버전스 레이아웃(`architect-advisor/adrs/` → `architect-advisor/<slug>/adrs/` → 레거시 `architect-advisor/<slug>/adr/` → `docs/decisions/` → `adr/` → `docs/adr/` → `decisions/`).
+3. **섹션 채우기**: 플레이스홀더를 decompose 토폴로지·council 비교 결과로 채운다.
    - **Context**: decompose 토폴로지 링크와 트리거
-   - **Decision Drivers**: decision 비교 테이블의 평가 항목
+   - **Decision Drivers**: council 비교 테이블의 평가 항목
    - **Implementation Plan**: Affected paths, Dependencies(버전 포함), Patterns to follow/avoid, Configuration, Migration steps
    - **Verification**: 명령어·테스트·grep으로 검증 가능한 기준
-4. **Agent-Readiness 게이트** (`references/adr-review-checklist.md`): 통과 → audit 진입. 1–3 갭 → 즉시 보완 후 진입. 4+ 갭 → decompose/decision으로 되돌아가 재분해.
+4. **Agent-Readiness 게이트** (`references/adr-review-checklist.md`): 통과 → audit 진입. 1–3 갭 → 즉시 보완 후 진입. 4+ 갭 → decompose/council로 되돌아가 재분해.
 5. **audit 결과는 Append**: audit에서 발견된 리스크·대응은 ADR의 `## Risk Audit` 섹션에 append. Evaluator-Optimizer 루프로 방안이 수정되면 이전 방안과 변경 사유도 함께 기록 (역사 삭제 금지).
 
 **코드 ↔ ADR 양방향 링크**:
@@ -288,7 +288,7 @@ decompose에서 식별한 각 모듈 경계(boundary)에 대해 다음을 자문
 ### 영향도(Blast Radius) 재측정
 
 decompose의 결합 관계 분석을 **동적 관점**으로 다시 본다:
-1. 선택한 방안(decision)이 결합 관계를 변경시켰는가? (예: 강결합 → 이벤트 기반 느슨한 결합)
+1. council에서 선택한 방안이 결합 관계를 변경시켰는가? (예: 강결합 → 이벤트 기반 느슨한 결합)
 2. 새로운 의존 방향이 순환 의존을 만들지 않는가?
 3. 한 모듈 장애 시 연쇄 장애 범위가 방안 A와 B에서 각각 어떻게 다른가?
 
@@ -298,10 +298,10 @@ decompose의 결합 관계 분석을 **동적 관점**으로 다시 본다:
 
 각 시나리오에 대해 자문자답(Self-Q&A) 형식으로:
 1. 어떤 문제가 발생할 수 있는지 구체적으로 서술한다
-2. decision에서 선택한 방안이 이 시나리오를 어떻게 처리하는지 검증한다
+2. council에서 선택한 방안이 이 시나리오를 어떻게 처리하는지 검증한다
 3. 추가 보완이 필요하면 구체적인 대응 방안을 제시한다
 
-### Evaluator-Optimizer 피드백 루프 (decision ↔ audit)
+### Evaluator-Optimizer 피드백 루프 (council ↔ audit)
 
 감사 결과 **선택한 방안이 핵심 리스크를 구조적으로 해결하지 못하는 경우**, 단순히 "보완 필요"로 넘기지 않고 방안 재검토를 Chloe에게 제안한다:
 
@@ -316,7 +316,7 @@ decompose의 결합 관계 분석을 **동적 관점**으로 다시 본다:
 방안 비교로 돌아갈까요?
 ```
 
-이 루프 덕분에 "방안 선택 → 감사 → 문제 발견 → 방안 수정"이 자연스럽게 흐른다. Chloe가 재검토를 승인하면 decision으로 돌아가고, 유지를 선택하면 보완 설계를 추가한 뒤 portfolio로 진행한다.
+이 루프 덕분에 "방안 선택 → 감사 → 문제 발견 → 방안 수정"이 자연스럽게 흐른다. Chloe가 재검토를 승인하면 council로 돌아가고, 유지를 선택하면 보완 설계를 추가한 뒤 portfolio로 진행한다.
 
 **산출물 저장**: 감사 결과를 `python3 scripts/workflow-state.py save audit <도메인>-audit`로 저장하고, 동시에 adr이 생성한 ADR의 `## Risk Audit` 섹션에도 요약을 append한다.
 
@@ -374,9 +374,9 @@ decompose의 결합 관계 분석을 **동적 관점**으로 다시 본다:
 
 ## 워크플로우 규칙
 
-1. **권장 순서**: `decompose → decision → adr → audit → portfolio`. 단, `adr ↔ audit`은 Evaluator-Optimizer 루프로 역방향 전환 가능하며, 방안 자체를 재검토해야 하면 decision으로 되돌아간다.
+1. **권장 순서**: `decompose → council → adr → audit → portfolio`. 단, `adr ↔ audit`은 Evaluator-Optimizer 루프로 역방향 전환 가능하며, 방안 자체를 재검토해야 하면 council로 되돌아간다.
 2. **체크포인트 확인**: 각 skill 완료 후 Chloe에게 결과를 보여주고, 확인/수정 요청을 받은 뒤 다음 단계로 진행한다.
-3. **코드 금지 구간**: decision의 방안 확정 전까지 구체적인 비즈니스 코드를 출력하지 않는다. 의사코드(Pseudocode)나 구조도는 허용한다.
+3. **코드 금지 구간**: council의 방안 확정 전까지 구체적인 비즈니스 코드를 출력하지 않는다. 의사코드(Pseudocode)나 구조도는 허용한다.
 4. **adr 필수화**: 핵심 비즈니스 로직(결제, 인증, 정산, 데이터 일관성)에 대한 결정은 반드시 ADR로 기록한다. 단순 스타일·내부 리팩터링 결정은 건너뛰어도 된다.
 5. **ADR 게이트**: `references/adr-review-checklist.md`를 통과하기 전에는 audit으로 진입하지 않는다. Agent-readiness가 곧 "구현 가능한 결정"의 척도다.
 6. **용어 즉시 번역**: 새 전문용어가 등장하는 그 순간 인라인으로 번역한다. portfolio까지 미루지 않는다.
@@ -411,16 +411,16 @@ decompose의 결합 관계 분석을 **동적 관점**으로 다시 본다:
 - `--bootstrap` — ADR 디렉토리 + README 인덱스만 생성
 - `--json` — Claude가 결과를 파싱할 때
 
-특징: 템플릿은 `references/adr-template.md` (MADR 4.0 + Implementation Plan + Verification). `workflow-state.json`의 `steps.decision.decision.reason`이 Decision Outcome에 자동 시드되고, 기존 ADR 디렉토리·번호링 전략은 자동 계승하며 인덱스(`README.md`/`index.md`)에 자동 append된다. 구버전 `phase3-adr/`, `phase2.5-adr/` 디렉토리는 자동으로 `adr/`로 이름이 바뀐다.
+특징: 템플릿은 `references/adr-template.md` (MADR 4.0 + Implementation Plan + Verification). `workflow-state.json`의 `steps.council.decision.reason`이 Decision Outcome에 자동 시드되고, 기존 ADR 디렉토리·번호링 전략은 자동 계승하며 인덱스(`README.md`/`index.md`)에 자동 append된다. 구버전 `decision/`, `phase3-adr/`, `phase2.5-adr/` 디렉토리는 자동으로 신 step 이름으로 바뀐다.
 
 ### 워크플로우 상태 추적: `workflow-state.py`
 
 `scripts/workflow-state.py` — step별 진행 상태를 `architect-advisor/<project>/state/workflow.json`에 기록한다. 주요 서브커맨드:
 
 - `init "<project>"` — 워크플로우 시작
-- `step <name> in_progress|completed` — step 전환 (decompose/decision/adr/audit/portfolio)
+- `step <name> in_progress|completed` — step 전환 (decompose/council/adr/audit/portfolio)
 - `term '{"korean":"...","english":"...","chinese":"..."}'` — 인라인 번역 수집
-- `decision a|b "<reason>"` — 방안 확정
+- `council a|b "<reason>"` — 방안 확정 (구 alias: `decision`)
 - `show` / `paths` — 상태·산출물 경로 확인
 - `save <step> <name>` — stdin으로 받은 마크다운을 해당 step 디렉토리에 저장
 
