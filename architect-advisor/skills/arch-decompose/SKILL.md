@@ -94,11 +94,26 @@ graph TD
 
 > 이 결합 관계 산출물은 `/arch-audit`의 **Integration Risk 감사**(모듈 경계·이벤트 순서·공유 리소스 등)로 그대로 이어진다. 결합을 명확히 그려둘수록 감사가 풍부해진다.
 
-## 산출물 저장 경로
+## 산출물 저장 경로 (W0.3 컨버전스)
 
-`architect-advisor/<project-slug>/decompose/`. 프로젝트 슬러그는 `workflow-state.py init <name>`으로 지정하지 않았으면 현재 디렉토리 basename으로 자동 설정된다.
+```
+architect-advisor/decompositions/
+├── DECOMP-YYYY-MM-DD-<slug>.yaml          ← Step YAML (cold-start safe)
+├── topology-<slug>.md                      ← Mermaid 다이어그램
+├── coupling-<slug>.md                      ← 결합 관계
+└── state-machine-<slug>.md                 ← 상태 머신
+```
+
+monorepo 모드에서는 `architect-advisor/<product>/decompositions/`.
 
 ```bash
+# Step YAML (W2.2 메인 산출물)
+cat <<'EOF' | python3 scripts/workflow-state.py save decompose steps_yaml
+- step_id: 1
+  title: ...
+  ...
+EOF
+
 # 토폴로지
 cat <<'EOF' | python3 scripts/workflow-state.py save decompose topology
 # 토폴로지
@@ -113,6 +128,20 @@ EOF
 ```
 
 `state-machine.md`도 같은 방식으로 저장한다.
+
+### 검증 (decompose 직후 자동)
+
+```bash
+python3 scripts/validate_decompose.py architect-advisor/decompositions/DECOMP-*.yaml
+```
+
+다음을 검사한다:
+- 모든 step의 `files_to_read`가 실재
+- 의존 그래프가 DAG (순환 없음)
+- 동일 `parallel_with` 그룹 내 step들이 같은 파일을 쓰지 않음 (write conflict 방지)
+- `context_brief.problem`에 다른 step에 대한 ambient reference 없음
+
+검증 실패 시 step 수정 후 재시도. 모두 통과해야 `/arch-decision`으로 진행.
 
 ## 완료 조건
 
