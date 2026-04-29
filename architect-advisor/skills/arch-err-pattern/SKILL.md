@@ -206,6 +206,56 @@ python3 scripts/workflow-state.py patterns-stat \
 
 두 명령 모두 실행해야 `state/workflow.json`의 `patterns` 필드가 완전히 최신화됨.
 
+## Plan 소비 포맷 (writing-plans 측에서 사용)
+
+이 skill이 산출하는 `CONFLICT_PATTERNS.md`는 다음 두 흐름의 **공급원**이다:
+
+1. **수동 참조** — 사용자가 직접 읽어보는 경우
+2. **`writing-plans` 자동 주입** — 글로벌 CLAUDE.md §6에 정의된 플로우
+
+`writing-plans` 측에서 CONFLICT_PATTERNS를 plan에 주입할 때 **반드시 이 포맷을 그대로 사용**한다. 포맷이 흔들리면 cross-session/cross-project grep과 비교가 깨진다.
+
+### 주입 포맷 1: 매칭된 task의 acceptance criteria
+
+매칭된 패턴이 있는 각 task에 다음 블록을 추가한다:
+
+```markdown
+**Pattern-driven acceptance criteria:**
+
+From 모드 N ([pattern name]):
+- [ ] [prevention rule 1]
+- [ ] [prevention rule 2]
+```
+
+규칙:
+- `모드 N` 번호는 CONFLICT_PATTERNS.md의 `<!-- pattern-id: M<n> -->` 주석 번호 그대로 사용
+- `[prevention rule N]`은 해당 모드의 **예방 규칙** 섹션을 verbatim 복사 (재구성 금지)
+- 한 task가 여러 모드를 트리거하면 모드별로 블록을 반복
+
+### 주입 포맷 2: plan 마지막 로그 섹션
+
+plan 문서 맨 끝에 정확히 이 형식으로 추가:
+
+```markdown
+## Applied Conflict Patterns
+
+Source: `architect-advisor/<project>/patterns/CONFLICT_PATTERNS.md`
+
+| Task | Triggered Patterns |
+|------|-------------------|
+| Task 1 | 모드 2, 모드 4 |
+| Task 3 | 모드 8 |
+```
+
+규칙:
+- 한 패턴도 매칭 안 된 plan이면 이 섹션 자체를 만들지 않는다 (빈 표 금지)
+- `Source:` 경로는 monorepo면 `architect-advisor/<product>/patterns/...`로 조정
+- `Triggered Patterns` 컬럼은 콤마로 분리
+
+### 비매칭 시 동작
+
+task의 모듈이 어떤 패턴과도 일치하지 않으면 — **아무것도 추가하지 않는다**. 예방 규칙을 억지로 만들거나 fabricate하지 않는다.
+
 ## 증분 업데이트 규칙
 
 `CONFLICT_PATTERNS.md`가 이미 존재하면:
