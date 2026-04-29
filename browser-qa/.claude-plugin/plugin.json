@@ -1,0 +1,10 @@
+{
+  "name": "browser-qa",
+  "version": "1.0.0",
+  "description": "AI-driven post-deploy QA via browser automation — smoke / interaction / visual / accessibility passes. Borrowed from ECC.",
+  "author": {
+    "name": "jrkim"
+  },
+  "license": "MIT",
+  "keywords": ["browser-qa", "post-deploy", "smoke-test", "visual-regression", "accessibility"]
+}

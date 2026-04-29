@@ -23,6 +23,18 @@
       "description": "Utility slash commands — daily scrum, doc sync, translations, screenshots, Notion logging, AI builder digest",
       "source": "./my-utils",
       "category": "utility"
+    },
+    {
+      "name": "e2e-testing",
+      "description": "Playwright E2E testing patterns — POM, fixtures, CI/CD, flaky test handling. Borrowed from ECC.",
+      "source": "./e2e-testing",
+      "category": "development"
+    },
+    {
+      "name": "browser-qa",
+      "description": "AI-driven post-deploy QA via browser automation. Borrowed from ECC.",
+      "source": "./browser-qa",
+      "category": "development"
     }
   ]
 }

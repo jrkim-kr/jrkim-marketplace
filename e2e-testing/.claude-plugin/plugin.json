@@ -1,0 +1,10 @@
+{
+  "name": "e2e-testing",
+  "version": "1.0.0",
+  "description": "Playwright E2E testing patterns — Page Object Model, fixtures, CI/CD integration, flaky test handling. Borrowed from ECC.",
+  "author": {
+    "name": "jrkim"
+  },
+  "license": "MIT",
+  "keywords": ["e2e", "playwright", "testing", "pom", "fixtures"]
+}
