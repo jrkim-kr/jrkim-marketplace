@@ -419,6 +419,10 @@ def ensure_step_keys(state: dict) -> bool:
         # 둘 다 있으면 council 유지, 구 키는 폐기
         steps.pop("decision")
         changed = True
+    # current_step 포인터도 동시 이관
+    if state.get("current_step") == "decision":
+        state["current_step"] = "council"
+        changed = True
     if "decompose" not in steps:
         steps["decompose"] = dict(STEP_DEFAULT)
         changed = True

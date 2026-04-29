@@ -10,16 +10,6 @@
       "started_at": null,
       "completed_at": null
     },
-    "decision": {
-      "status": "pending",
-      "started_at": null,
-      "completed_at": null,
-      "decision": {
-        "choice": "plan_A",
-        "reason": "외부 의존 0, Vercel public/ 자동 서빙, 폰트는 변경 빈도 사실상 0이라 직접 커밋이 가장 단순·안전",
-        "decided_at": "2026-04-27T05:37:41.446899+00:00"
-      }
-    },
     "adr": {
       "status": "pending",
       "started_at": null,
@@ -38,6 +28,16 @@
       "status": "pending",
       "started_at": null,
       "completed_at": null
+    },
+    "council": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "decision": {
+        "choice": "plan_A",
+        "reason": "외부 의존 0, Vercel public/ 자동 서빙, 폰트는 변경 빈도 사실상 0이라 직접 커밋이 가장 단순·안전",
+        "decided_at": "2026-04-27T05:37:41.446899+00:00"
+      }
     }
   },
   "terms": [],
