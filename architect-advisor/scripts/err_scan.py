@@ -44,6 +44,9 @@ import sys
 from pathlib import Path
 from collections import Counter
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from lib.resolve_error_dir import resolve_error_dir, describe_resolution
+
 # 별칭 매핑 — architect-advisor arch-err-pattern skill과 동기화 유지
 FIELD_ALIASES = {
     "root_cause": ["근본 원인", "Root Cause", "원인", "Cause", "분석"],
@@ -214,12 +217,19 @@ def scan_dir(dir_path: Path) -> dict:
 
 def main():
     p = argparse.ArgumentParser(description="Scan ERR-*.md files for arch-err-pattern skill.")
-    p.add_argument("--dir", default="docs/errors", help="ERR 문서 디렉토리 (기본 docs/errors)")
+    p.add_argument("--dir", default=None, help="ERR 문서 디렉토리 (미지정 시 .flushrc.json -> find errors/ -> ./errors/ 자동 해석)")
+    p.add_argument("--root", default=".", help="프로젝트 루트 (기본 현재 디렉토리)")
     p.add_argument("--json", action="store_true", help="전체 JSON 덤프")
     p.add_argument("--summary", action="store_true", help="개수·모듈 빈도 요약만")
+    p.add_argument("--explain", action="store_true", help="해석된 errorDocDir의 출처(tier)만 출력")
     args = p.parse_args()
 
-    result = scan_dir(Path(args.dir))
+    if args.explain:
+        print(json.dumps(describe_resolution(args.root), ensure_ascii=False, indent=2))
+        return
+
+    err_dir = Path(args.dir) if args.dir else resolve_error_dir(args.root)
+    result = scan_dir(err_dir)
 
     if args.summary:
         summary = {
