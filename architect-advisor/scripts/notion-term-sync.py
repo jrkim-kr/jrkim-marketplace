@@ -40,9 +40,10 @@ ACTIVE_POINTER = os.path.join(AA_ROOT, ".active")
 LEGACY_STATE = os.path.join(os.getcwd(), "docs", "plan", "workflow-state.json")
 
 FLAT_LAYOUT_DIRS = {
-    "state", "decompose", "decision", "adr", "audit", "portfolio",
+    "state", "decompose", "council", "adr", "audit", "portfolio",
     "glossary", "patterns",
     # 구버전 호환
+    "decision",
     "phase1-decompose", "phase2-decision", "phase2.5-adr",
     "phase3-adr", "phase3-audit", "phase4-audit",
     "phase4-portfolio", "phase5-portfolio",
@@ -253,7 +254,7 @@ def main():
     step_filter = args.step or args.phase
     if step_filter:
         # 구버전 phase 키도 입력으로 받아 step으로 매핑
-        legacy_map = {"phase1": "decompose", "phase2": "decision", "phase2.5": "adr", "phase3": "adr", "phase4": "audit", "phase5": "portfolio"}
+        legacy_map = {"phase1": "decompose", "phase2": "council", "phase2.5": "adr", "phase3": "adr", "phase4": "audit", "phase5": "portfolio", "decision": "council"}
         step_filter = legacy_map.get(step_filter, step_filter)
         terms = [t for t in terms if step_filter in (t.get("steps") or t.get("phases", []))]
 

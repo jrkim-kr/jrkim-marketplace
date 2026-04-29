@@ -7,14 +7,14 @@ architect-advisor 워크플로우 상태 관리 스크립트.
 모든 산출물은 프로젝트 루트의 `architect-advisor/<project-slug>/` 하위에
 **skill 이름 디렉토리**로 저장된다 (멀티 프로젝트 지원). Phase 번호는 사용하지
 않으며, skill은 독립 호출 가능한 단위다 — 다만 권장 작업 순서는
-`decompose → decision → adr → audit → portfolio`.
+`decompose → council → adr → audit → portfolio`.
 
 사용법:
     python3 workflow-state.py init <project-name>            # 새 워크플로우 시작
     python3 workflow-state.py [--project X] step <name> <st> # step 상태 업데이트
     python3 workflow-state.py [--project X] term <json|->    # 용어 추가 (- = stdin)
     python3 workflow-state.py [--project X] term --file <p>  # 용어 JSON 파일
-    python3 workflow-state.py [--project X] decision <a|b> [reason]
+    python3 workflow-state.py [--project X] council <a|b> [reason]   # (alias: decision)
     python3 workflow-state.py [--project X] save <step> <filename>  # stdin → md
     python3 workflow-state.py [--project X] paths            # 산출물 경로
     python3 workflow-state.py [--project X] show
@@ -25,7 +25,7 @@ architect-advisor 워크플로우 상태 관리 스크립트.
 멀티 프로젝트 경로 스키마:
     architect-advisor/<slug>/state/workflow.json   — 워크플로우 상태
     architect-advisor/<slug>/decompose/            — 토폴로지, 상태머신, 결합관계
-    architect-advisor/<slug>/decision/             — 방안 비교표, 추천 근거
+    architect-advisor/<slug>/council/              — 4-voice 비교표, 추천 근거
     architect-advisor/<slug>/adr/NNNN-*.md         — ADR (new_adr.py가 저장)
     architect-advisor/<slug>/audit/                — 리스크 감사 결과
     architect-advisor/<slug>/portfolio/            — STAR 케이스, 면접 요약
@@ -34,11 +34,13 @@ architect-advisor 워크플로우 상태 관리 스크립트.
 
 자동 마이그레이션:
     1. 평면 레이아웃 (architect-advisor/{state,decompose,...}) → 슬러그 하위로 이동
-    2. 구버전 phase 디렉토리/키 → step 이름으로 이름 변경
-       - phase1-decompose → decompose, phase2-decision → decision,
+    2. 구 디렉토리·키 → 신 step 이름으로 이름 변경
+       - decision → council (arch-council 도입에 따른 일관화)
+       - phase1-decompose → decompose, phase2-decision → council,
          phase2.5-adr/phase3-adr → adr, phase3-audit/phase4-audit → audit,
          phase4-portfolio/phase5-portfolio → portfolio
        - state.phases.{phase1..phase5,phase2.5} → state.steps.{name}
+       - state.steps.decision → state.steps.council
 """
 
 import argparse
@@ -56,7 +58,7 @@ AA_ROOT = os.path.join(os.getcwd(), "architect-advisor")
 # glossary/patterns는 단독 step이 아니라 횡단 산출물이지만 저장 목표로 허용.
 STEP_SUBDIRS = {
     "decompose": "decompose",
-    "decision": "decision",
+    "council": "council",
     "adr": "adr",
     "audit": "audit",
     "portfolio": "portfolio",
@@ -65,20 +67,21 @@ STEP_SUBDIRS = {
 }
 
 # 권장 진행 순서 (강제 아님). step 완료 시 다음 step을 current_step으로 자동 설정.
-STEP_ORDER = ["decompose", "decision", "adr", "audit", "portfolio"]
+STEP_ORDER = ["decompose", "council", "adr", "audit", "portfolio"]
 
 # 평면 레이아웃 마이그레이션 대상 (슬러그 하위로 이동) — 신키 + 구키 모두 포함
 FLAT_MIGRATE_DIRS = [
     "state",
     # 신 step 디렉토리
     "decompose",
-    "decision",
+    "council",
     "adr",
     "audit",
     "portfolio",
     "glossary",
     "patterns",
-    # 구 phase 디렉토리 (이름 변경 대상)
+    # 구 step / phase 디렉토리 (이름 변경 대상)
+    "decision",
     "phase1-decompose",
     "phase2-decision",
     "phase2.5-adr",
@@ -89,10 +92,11 @@ FLAT_MIGRATE_DIRS = [
     "phase5-portfolio",
 ]
 
-# 구 phase 디렉토리 → 신 step 디렉토리 매핑 (이름 변경)
+# 구 step/phase 디렉토리 → 신 step 디렉토리 매핑 (이름 변경)
 LEGACY_DIR_RENAME = {
+    "decision": "council",
     "phase1-decompose": "decompose",
-    "phase2-decision": "decision",
+    "phase2-decision": "council",
     "phase2.5-adr": "adr",
     "phase3-adr": "adr",
     "phase3-audit": "audit",
@@ -101,15 +105,17 @@ LEGACY_DIR_RENAME = {
     "phase5-portfolio": "portfolio",
 }
 
-# 구 phase 키 → 신 step 키
+# 구 phase / step 키 → 신 step 키
 LEGACY_PHASE_KEY_MAP = {
     "phase1": "decompose",
-    "phase2": "decision",
+    "phase2": "council",
     "phase2.5": "adr",
     # phase3는 ADR이었던 적과 audit이었던 적 둘 다 있다 — 모양으로 판별 후 매핑
     # phase4는 audit이었던 적과 portfolio였던 적 둘 다 있다 — 모양으로 판별
     # phase5는 portfolio
     "phase5": "portfolio",
+    # 구 step 이름 (arch-council 도입 이전)
+    "decision": "council",
 }
 
 
@@ -405,12 +411,20 @@ def ensure_step_keys(state: dict) -> bool:
         steps = {}
         state["steps"] = steps
         changed = True
+    # 구 step 키 'decision' → 신 키 'council'로 이관 (arch-council 도입 이전 상태 호환)
+    if "decision" in steps and "council" not in steps:
+        steps["council"] = steps.pop("decision")
+        changed = True
+    elif "decision" in steps and "council" in steps:
+        # 둘 다 있으면 council 유지, 구 키는 폐기
+        steps.pop("decision")
+        changed = True
     if "decompose" not in steps:
         steps["decompose"] = dict(STEP_DEFAULT)
         changed = True
-    if "decision" not in steps:
-        steps["decision"] = dict(STEP_DEFAULT)
-        steps["decision"]["decision"] = None
+    if "council" not in steps:
+        steps["council"] = dict(STEP_DEFAULT)
+        steps["council"]["decision"] = None
         changed = True
     if "adr" not in steps:
         steps["adr"] = dict(STEP_ADR_DEFAULT)
@@ -454,10 +468,10 @@ def migrate_legacy_state_to_steps(state: dict) -> bool:
 
     if "decompose" not in steps:
         steps["decompose"] = take("phase1", STEP_DEFAULT)
-    if "decision" not in steps:
+    if "council" not in steps:
         d = take("phase2", STEP_DEFAULT)
         d.setdefault("decision", None)
-        steps["decision"] = d
+        steps["council"] = d
     if "adr" not in steps:
         if "phase2.5" in phases:
             steps["adr"] = take("phase2.5", STEP_ADR_DEFAULT)
@@ -640,8 +654,13 @@ def cmd_term(slug: str, payload: str):
 
 
 def cmd_decision(slug: str, choice: str, reason: str = ""):
+    """council step에서 확정된 plan을 기록한다.
+
+    CLI는 `decision` / `council` 두 alias 모두 받는다. 내부 데이터 필드명은
+    'decision'을 유지한다 — 'council이 내린 decision'이라는 의미상의 분리.
+    """
     state = auto_init_if_needed(slug)
-    state["steps"]["decision"]["decision"] = {
+    state["steps"]["council"]["decision"] = {
         "choice": f"plan_{choice.upper()}",
         "reason": reason,
         "decided_at": now_iso(),
@@ -872,9 +891,9 @@ def main():
             payload = _read_term_payload("-", None)
         cmd_term(slug, payload)
 
-    elif cmd == "decision":
+    elif cmd in ("council", "decision"):
         if not rest:
-            print("Usage: workflow-state.py decision <a|b> [reason]", file=sys.stderr)
+            print("Usage: workflow-state.py council <a|b> [reason]", file=sys.stderr)
             sys.exit(1)
         cmd_decision(slug, rest[0], " ".join(rest[1:]) if len(rest) > 1 else "")
 

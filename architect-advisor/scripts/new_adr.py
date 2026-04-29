@@ -54,13 +54,14 @@ INDEX_NAMES = ["README.md", "index.md"]
 FLAT_LAYOUT_DIRS = {
     "state",
     "decompose",
-    "decision",
+    "council",
     "adr",
     "audit",
     "portfolio",
     "glossary",
     "patterns",
     # 구버전 호환
+    "decision",
     "phase1-decompose",
     "phase2-decision",
     "phase2.5-adr",
@@ -253,10 +254,10 @@ def _migrate_phases_to_steps(state: dict) -> None:
 
     if "decompose" not in steps:
         steps["decompose"] = _take("phase1", {"status": "pending"})
-    if "decision" not in steps:
+    if "council" not in steps:
         d = _take("phase2", {"status": "pending"})
         d.setdefault("decision", None)
-        steps["decision"] = d
+        steps["council"] = d
     if "adr" not in steps:
         if "phase2.5" in phases:
             steps["adr"] = _take("phase2.5", STEP_ADR_DEFAULT)
@@ -281,7 +282,16 @@ def _migrate_phases_to_steps(state: dict) -> None:
 
     cp = state.pop("current_phase", None)
     if cp and "current_step" not in state:
-        state["current_step"] = {"phase1": "decompose", "phase2": "decision", "phase2.5": "adr", "phase3": "adr" if not p3_is_audit else "audit", "phase4": "audit" if not p4_is_portfolio else "portfolio", "phase5": "portfolio"}.get(cp, "decompose")
+        state["current_step"] = {"phase1": "decompose", "phase2": "council", "phase2.5": "adr", "phase3": "adr" if not p3_is_audit else "audit", "phase4": "audit" if not p4_is_portfolio else "portfolio", "phase5": "portfolio"}.get(cp, "decompose")
+
+
+def _migrate_decision_to_council(state: dict) -> None:
+    """구 step 키 'decision' → 신 키 'council'. arch-council 도입 이전 상태 호환."""
+    steps = state.setdefault("steps", {})
+    if "decision" in steps and "council" not in steps:
+        steps["council"] = steps.pop("decision")
+    elif "decision" in steps and "council" in steps:
+        steps.pop("decision")
 
 
 def load_workflow_state(slug: str) -> dict:
@@ -290,6 +300,7 @@ def load_workflow_state(slug: str) -> dict:
         with sf.open("r", encoding="utf-8") as f:
             state = json.load(f)
         _migrate_phases_to_steps(state)
+        _migrate_decision_to_council(state)
         steps = state.setdefault("steps", {})
         if "adr" not in steps:
             steps["adr"] = dict(STEP_ADR_DEFAULT)
@@ -300,6 +311,7 @@ def load_workflow_state(slug: str) -> dict:
         with LEGACY_WORKFLOW_STATE.open("r", encoding="utf-8") as f:
             state = json.load(f)
         _migrate_phases_to_steps(state)
+        _migrate_decision_to_council(state)
         state.setdefault("steps", {}).setdefault("adr", dict(STEP_ADR_DEFAULT))
         return state
     return {}
@@ -327,7 +339,7 @@ def fill_template(
 ) -> str:
     """템플릿의 `{placeholder}`를 workflow-state와 CLI 인자로 채운다."""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    decision = (state.get("steps", {}).get("decision", {}) or {}).get("decision") or {}
+    decision = (state.get("steps", {}).get("council", {}) or {}).get("decision") or {}
     reason = decision.get("reason", "")
     choice = decision.get("choice", "")
 
@@ -474,7 +486,7 @@ def cmd_create(args, slug: str) -> dict:
         "status": args.status,
         "project_slug": slug,
         "index": str(index_path.relative_to(REPO_ROOT)) if index_path else None,
-        "workflow_seed": bool((state.get("steps", {}).get("decision") or {}).get("decision")),
+        "workflow_seed": bool((state.get("steps", {}).get("council") or {}).get("decision")),
         "supersedes": superseded_targets,
     }
 
