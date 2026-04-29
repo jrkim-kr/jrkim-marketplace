@@ -3,6 +3,7 @@ name: arch-decompose
 description: "아키텍처 시스템 분해 & 토폴로지. 요구사항을 독립 비즈니스 노드로 쪼개고 전체 흐름을 시각화한다. '시스템 분해', '토폴로지', '모듈 분리', '노드 구성', 'decompose', 'decomposition' 등의 키워드에 트리거."
 argument-hint: "[분석할 모듈 또는 기능 설명]"
 user-invokable: true
+origin: "Step YAML cold-start brief borrowed from ECC `blueprint` (affaan-m/everything-claude-code), adapted with topology + state machine + coupling outputs + Integration Risk handoff to arch-audit + CONFLICT_PATTERNS auto-injection"
 ---
 
 # Architect Advisor — 시스템 분해 & 토폴로지 (Decomposition)

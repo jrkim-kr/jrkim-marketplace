@@ -3,6 +3,7 @@ name: arch-err-pattern
 description: "architect-advisor 횡단 도구. `<ERR_DIR>/ERR-*.md`를 가로로 훑어 재발 충돌 패턴을 추출해 `CONFLICT_PATTERNS.md`를 생성한다. ERR_DIR은 `.flushrc.json` → `find errors/` → `./errors/` 3단계로 자동 해석된다. 다음 `writing-plans`가 자동 참조. 트리거: '패턴 추출', 'CONFLICT_PATTERNS', '冲突模式', 'extract conflict patterns'."
 argument-hint: "[ERR 디렉토리 경로 (생략 시 자동 해석)] 또는 [프로젝트 슬러그]"
 user-invokable: true
+origin: "Auto-accumulation pattern (W3.1) borrowed from ECC `continuous-learning-v2` (affaan-m/everything-claude-code) instinct extraction + project-scoped storage + confidence ladder, adapted as flush↔advisor producer-consumer split + ADR↔ERR bidirectional refs"
 ---
 
 # Arch Err Pattern — 에러 문서 횡단 패턴 추출

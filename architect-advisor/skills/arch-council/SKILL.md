@@ -3,6 +3,7 @@ name: arch-council
 description: "아키텍처 의사결정 & 트레이드오프. 핵심 로직에 대해 4-voice council(Architect/Skeptic/Pragmatist/Critic)을 fresh subagent로 병렬 소집해 anchoring을 무력화한 비교를 만든 뒤 추천안을 제시한다. '방안 비교', '트레이드오프', '의사결정', 'MVP vs', 'trade-off', '어떤 방식이 좋을까', 'council', '4-voice' 등의 키워드에 트리거."
 argument-hint: "[비교할 기능 또는 설계 주제]"
 user-invokable: true
+origin: "borrowed from ECC `council` (affaan-m/everything-claude-code), adapted with arch-adr autoflow + key_dissent JSON schema + Korean tone"
 ---
 
 # Architect Advisor — 의사결정 & 트레이드오프 (Decision & Trade-off)

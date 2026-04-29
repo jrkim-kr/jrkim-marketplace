@@ -3,6 +3,7 @@ name: arch-audit
 description: "이상 경로 & 리스크 감사. 극단적 상황을 시뮬레이션하여 시스템 취약점을 사전 발견한다. '리스크 감사', '이상 경로', '장애 시나리오', '취약점 분석', 'risk audit', '엣지 케이스' 등의 키워드에 트리거."
 argument-hint: "[감사할 모듈 또는 설계]"
 user-invokable: true
+origin: "borrowed from ECC `santa-method` (Ronald Skelton, RapportScore.ai via affaan-m/everything-claude-code) dual-reviewer + convergence loop, adapted with 6-domain routing + Integration Risk module + ADR Risk Audit auto-append"
 ---
 
 # Architect Advisor — 이상 경로 감사 (Risk Audit)

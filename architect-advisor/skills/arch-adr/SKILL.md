@@ -3,6 +3,7 @@ name: arch-adr
 description: "아키텍처 결정 기록 (Architecture Decision Record). 확정된 방안을 다음 코딩 에이전트가 질문 없이 구현할 수 있는 실행 가능 스펙(executable specification)으로 고정한다. 'ADR 작성', 'ADR 초안', '결정 기록', 'Architecture Decision Record', 'MADR', 'agent-readiness 게이트', '의사결정 문서화' 등의 키워드에 트리거."
 argument-hint: "[ADR 제목 또는 기록할 결정 주제]"
 user-invokable: true
+origin: "borrowed from ECC `architecture-decision-records` (affaan-m/everything-claude-code) lifecycle/supersede pattern + skillrecordings/adr-skill agent-first philosophy, adapted with Korean MADR template + Notion term-glossary linkage + ERR↔ADR bidirectional refs"
 ---
 
 # Architect Advisor — ADR 기록 (Decision Record)
