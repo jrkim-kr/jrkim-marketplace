@@ -23,7 +23,7 @@
 |---|---|---|---|
 | 새 기능·도메인 처음부터 설계 | `/architect-advisor:architect-advisor` | 40~60분 | 권장 순서 전체 |
 | 요구사항만 있고 구조만 먼저 쪼개고 싶음 | `/architect-advisor:arch-decompose` | 10~15분 | 토폴로지·상태머신·결합관계 |
-| 두 방안 중 하나 고르는 비교만 필요 | `/architect-advisor:arch-decision` | 10~20분 | 비교표 + 추천안 (+ ADR 초안) |
+| 두 방안 중 하나 고르는 비교만 필요 | `/architect-advisor:arch-council` | 10~20분 | 비교표 + 추천안 (+ ADR 초안) |
 | 기존 설계 리스크만 점검 | `/architect-advisor:arch-audit` | 15~25분 | 도메인별 감사서 + Integration Risk |
 | 완료된 설계를 커리어 자산화 | `/architect-advisor:arch-portfolio` | 10~15분 | STAR + 면접 요약 + 회고 |
 | 기술 용어만 한/중/영 정리 | `/architect-advisor:term-glossary` | ~5분 | 누적 용어집 (Notion 동기화 선택) |

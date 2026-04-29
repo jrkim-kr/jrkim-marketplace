@@ -7,7 +7,7 @@ user-invokable: true
 
 # Architect Advisor — ADR 기록 (Decision Record)
 
-이 스킬은 확정된 아키텍처 결정을 ADR로 고정한다. 방안 비교(`/arch-decision`) 직후 또는 이미 결정된 사안을 사후 문서화할 때 사용한다. 공통 정책(용어 번역 레이어, 산출물 규약, 톤)은 메인 스킬 `../architect-advisor/SKILL.md`를 따른다.
+이 스킬은 확정된 아키텍처 결정을 ADR로 고정한다. 방안 비교(`/arch-council`) 직후 또는 이미 결정된 사안을 사후 문서화할 때 사용한다. 공통 정책(용어 번역 레이어, 산출물 규약, 톤)은 메인 스킬 `../architect-advisor/SKILL.md`를 따른다.
 
 > 배경: `skillrecordings/adr-skill`의 agent-first ADR 철학을 차용. 언어는 한국어, 템플릿·체크리스트는 architect-advisor 워크플로우에 맞게 각색되었다.
 
@@ -21,7 +21,7 @@ user-invokable: true
 
 ## 언제 쓰는가
 
-- `/arch-decision` 결과가 확정되어 결정을 코드로 옮기기 직전
+- `/arch-council` 결과가 확정되어 결정을 코드로 옮기기 직전
 - 이미 결정된 사안을 문서화하지 않은 채 구현이 진행되고 있어 사후에 ADR로 고정해야 할 때
 - 기존 ADR을 재검토(superseded/revisited)해야 할 때
 
@@ -41,7 +41,7 @@ user-invokable: true
 
 | 상태 | 의미 | 전이 트리거 |
 |---|---|---|
-| **proposed** | 합의 전 초안. 코딩 에이전트는 따르지 않음 | `/arch-decision` 합의 확정 시 |
+| **proposed** | 합의 전 초안. 코딩 에이전트는 따르지 않음 | `/arch-council` 합의 확정 시 |
 | **accepted** | 현재 시행 중인 결정 | 기본값 |
 | **deprecated** | 더 이상 유효하지 않으나 대체 결정도 없음 (예: 기능 자체 제거) | 기능 제거 또는 사용 중단 |
 | **superseded** | 더 새로운 ADR로 대체됨. **반드시 `superseded_by` 양방향 링크** | 같은 주제에 대한 새 ADR 채택 시 |
@@ -93,7 +93,7 @@ related_terms: [JWT, Session] # term-glossary 자동 추출
 ## 언제 쓰지 않는가
 
 - 단순 스타일·내부 리팩터링 결정 — ADR 게이트는 핵심 비즈니스 로직(결제·인증·정산·데이터 일관성·외부 통합)에만 강제한다
-- 방안 비교가 끝나지 않은 상태 — 먼저 `/arch-decision`으로 확정한다
+- 방안 비교가 끝나지 않은 상태 — 먼저 `/arch-council`으로 확정한다
 
 ## 실행 순서
 
@@ -171,7 +171,7 @@ python3 scripts/new_adr.py --title "Saga 패턴으로 결제 정합성 확보" -
 스코어링:
 - **전부 통과** → `/arch-audit`로 진입 가능
 - **1–3개 갭** → 즉시 보완 후 진입
-- **4개 이상 갭** → `/arch-decompose` 또는 `/arch-decision`으로 되돌아가 재분해
+- **4개 이상 갭** → `/arch-decompose` 또는 `/arch-council`으로 되돌아가 재분해
 
 ### 5. 코드 ↔ ADR 양방향 링크
 

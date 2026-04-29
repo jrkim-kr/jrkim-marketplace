@@ -141,7 +141,7 @@ python3 scripts/validate_decompose.py architect-advisor/decompositions/DECOMP-*.
 - 동일 `parallel_with` 그룹 내 step들이 같은 파일을 쓰지 않음 (write conflict 방지)
 - `context_brief.problem`에 다른 step에 대한 ambient reference 없음
 
-검증 실패 시 step 수정 후 재시도. 모두 통과해야 `/arch-decision`으로 진행.
+검증 실패 시 step 수정 후 재시도. 모두 통과해야 `/arch-council`으로 진행.
 
 ## 완료 조건
 
@@ -149,6 +149,6 @@ python3 scripts/validate_decompose.py architect-advisor/decompositions/DECOMP-*.
 
 ## 권장 다음 작업 (강제 아님)
 
-- **방안 비교**: `/arch-decision` — 핵심 결정 포인트에 대해 MVP vs 견고한 설계 2안 비교
+- **방안 비교**: `/arch-council` — 핵심 결정 포인트에 대해 MVP vs 견고한 설계 2안 비교
 - **결합 관계 → Integration Risk**: `/arch-audit` Integration 도메인이 이 산출물을 입력으로 받는다
 - **권장 순서 전체 실행**: `/architect-advisor` — decompose → decision → adr → audit → portfolio 연속 실행

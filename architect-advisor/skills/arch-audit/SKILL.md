@@ -50,7 +50,7 @@ user-invokable: true
 ### Blast Radius 재측정
 
 decompose의 결합 관계를 **동적 관점**으로 다시 본다:
-1. 선택한 방안(`/arch-decision`)이 결합 관계를 변경시켰는가? (예: 강결합 → 이벤트 기반 느슨한 결합)
+1. 선택한 방안(`/arch-council`)이 결합 관계를 변경시켰는가? (예: 강결합 → 이벤트 기반 느슨한 결합)
 2. 새로운 의존 방향이 순환 의존을 만들지 않는가?
 3. 한 모듈 장애 시 연쇄 장애 범위가 방안 A와 B에서 어떻게 다른가?
 
@@ -154,7 +154,7 @@ if iter == MAX_ITER and not PASS:
 
 ## 방안 재검토 제안 (Evaluator-Optimizer 루프)
 
-감사 결과 현재 설계가 핵심 리스크를 **구조적으로 해결하지 못하는 경우**, 단순히 "보완 필요"로 넘기지 않고 `/arch-decision`으로 되돌아가는 재검토를 제안한다:
+감사 결과 현재 설계가 핵심 리스크를 **구조적으로 해결하지 못하는 경우**, 단순히 "보완 필요"로 넘기지 않고 `/arch-council`으로 되돌아가는 재검토를 제안한다:
 
 ```
 ⚠️ 방안 재검토 제안
@@ -167,7 +167,7 @@ if iter == MAX_ITER and not PASS:
 방안 비교로 돌아갈까요?
 ```
 
-Chloe가 승인하면 `/arch-decision`으로 돌아가고, 유지를 선택하면 보완 설계를 추가한 뒤 `/arch-portfolio`로 진행한다.
+Chloe가 승인하면 `/arch-council`으로 돌아가고, 유지를 선택하면 보완 설계를 추가한 뒤 `/arch-portfolio`로 진행한다.
 
 ## 산출물 저장 경로 (W0.3 컨버전스)
 
@@ -211,10 +211,10 @@ monorepo 모드에서는 `architect-advisor/<product>/audits/`. 각 audit 파일
 
 ## 권장 다음 작업
 
-- **방안 재검토 필요**: `/arch-decision`으로 돌아가 비교 다시 (Evaluator-Optimizer 루프)
+- **방안 재검토 필요**: `/arch-council`으로 돌아가 비교 다시 (Evaluator-Optimizer 루프)
 - **커리어 자산화**: `/arch-portfolio` — STAR 케이스, 30초 면접 요약, 회고
 - **권장 순서 전체 실행**: `/architect-advisor`
 
 ## 입력 컨텍스트
 
-`/arch-decision`과 `/arch-adr` 결과가 있으면 선택된 방안을 기준으로 감사한다. 없으면 Chloe가 설명하는 현재 설계를 기반으로 진행한다.
+`/arch-council`과 `/arch-adr` 결과가 있으면 선택된 방안을 기준으로 감사한다. 없으면 Chloe가 설명하는 현재 설계를 기반으로 진행한다.

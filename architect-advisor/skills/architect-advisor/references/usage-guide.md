@@ -61,7 +61,7 @@ architect-advisor/
 ├── SKILL.md                          # 메인 스킬 (5단계 하이브리드 워크플로우)
 ├── skills/
 │   ├── arch-decompose/SKILL.md       # decompose 독립 호출
-│   ├── arch-decision/SKILL.md        # decision 독립 호출
+│   ├── arch-council/SKILL.md        # decision 독립 호출
 │   ├── arch-audit/SKILL.md           # audit 독립 호출
 │   ├── arch-portfolio/SKILL.md       # portfolio 독립 호출
 │   └── term-glossary/SKILL.md        # /term-glossary 독립 호출

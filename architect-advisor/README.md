@@ -35,7 +35,7 @@ python3 scripts/workflow-state.py init "payment-system"
 
 # Or call any skill on its own
 /architect-advisor:arch-decompose
-/architect-advisor:arch-decision
+/architect-advisor:arch-council
 /architect-advisor:arch-adr
 /architect-advisor:arch-audit
 /architect-advisor:arch-portfolio
@@ -57,7 +57,7 @@ python3 scripts/workflow-state.py list-projects
 **5개 단독 skill (권장 순서: decompose → decision → adr → audit → portfolio)**
 - `architect-advisor` — 5개 skill을 권장 순서대로 연속 실행하는 메인 오케스트레이터.
 - `arch-decompose` — 시스템 분해 & 토폴로지 (Mermaid + 결합 관계).
-- `arch-decision` — MVP vs 견고한 아키텍처 비교 & 추천.
+- `arch-council` — MVP vs 견고한 아키텍처 비교 & 추천.
 - `arch-adr` — ADR 기록 (MADR 4.0 + Implementation Plan + Verification, agent-readiness 게이트).
 - `arch-audit` — 도메인별 이상 경로·리스크 감사.
 - `arch-portfolio` — 커리어 자산 (STAR/면접/용어/회고) 자동 생성.

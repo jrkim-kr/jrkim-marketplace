@@ -53,7 +53,7 @@ from lib.advisor_paths import resolve_layout  # noqa: E402
 
 KNOWN_SKILLS = {
     "arch-decompose",
-    "arch-decision",
+    "arch-council",
     "arch-adr",
     "arch-audit",
     "arch-err-pattern",
@@ -126,7 +126,7 @@ def _summarize(records: list[dict]) -> dict:
 
         if skill == "arch-audit" and isinstance(r.get("iter"), int):
             audit_iters.append(int(r["iter"]))
-        if skill == "arch-decision":
+        if skill == "arch-council":
             if r.get("lite_mode"):
                 decision_lite_count += 1
             else:
@@ -193,7 +193,7 @@ def _render_markdown(month: str, summary: dict, sample_size: int) -> str:
         f"- 평균 iteration: {summary['audit_iter_avg']}",
         f"- 최대 iteration: {summary['audit_iter_max']}",
         "",
-        "## arch-decision council 모드",
+        "## arch-council 모드",
         "",
         f"- lite (2-voice) 비율: {summary['decision_lite_share']:.0%}",
         "",
@@ -229,7 +229,7 @@ def _emit_empty_report(layout, month: str, as_json: bool) -> int:
             "> 입력 표본 0건. 사용 로그(`architect-advisor/_meta/usage.jsonl`)가 비어있음.\n"
             "> 각 sub-skill에서 호출 시 다음을 한 줄 append하도록 구현되면 다음 달부터 데이터가 쌓입니다.\n\n"
             "```json\n"
-            "{\"ts\": 1234567890, \"skill\": \"arch-decision\", \"outcome\": \"success\"}\n"
+            "{\"ts\": 1234567890, \"skill\": \"arch-council\", \"outcome\": \"success\"}\n"
             "```\n",
             encoding="utf-8",
         )
