@@ -52,6 +52,12 @@ Uses the browser automation MCP (claude-in-chrome, Playwright, or Puppeteer) to 
 4. Check screen reader landmarks
 ```
 
+## Screenshot Output Location
+
+Save all screenshots under `tests/qa-screenshots/` (relative to the project root) with the `qa-NN-<short-slug>.png` naming convention. Create the directory if missing. Never drop screenshots into the project root — they clutter the workspace and require manual cleanup.
+
+If the project lacks a `tests/` folder, ask the user where to put QA artifacts before capturing.
+
 ## Output Format
 
 ```markdown
