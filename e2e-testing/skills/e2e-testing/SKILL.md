@@ -1,7 +1,7 @@
 ---
 name: e2e-testing
 description: Playwright E2E testing patterns — Page Object Model, fixtures, configuration, CI/CD integration, artifact management, flaky test strategies. Use when writing or refactoring committed `.spec.ts` test files.
-origin: "borrowed from ECC `e2e-testing` (affaan-m/everything-claude-code), kept verbatim. Pairs with `test-verify` (my-utils) which generates test cases from spec.md — this skill provides the Playwright-specific patterns/templates for writing those tests."
+origin: "borrowed from ECC `e2e-testing` (affaan-m/everything-claude-code), kept verbatim. Provides Playwright-specific patterns/templates for writing committed `.spec.ts` files."
 ---
 
 # E2E Testing Patterns

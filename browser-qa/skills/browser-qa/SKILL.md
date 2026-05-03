@@ -1,7 +1,7 @@
 ---
 name: browser-qa
 description: Use this skill to automate visual testing and UI interaction verification using browser automation after deploying features.
-origin: "borrowed from ECC `browser-qa` (affaan-m/everything-claude-code), kept verbatim. Different layer from `e2e-testing` (committed specs) and `test-verify` (spec→test generation): browser-qa is ad-hoc post-deploy AI-driven QA, no committed code, no spec parsing — produces a one-shot QA report."
+origin: "borrowed from ECC `browser-qa` (affaan-m/everything-claude-code), kept verbatim. Different layer from `e2e-testing` (committed specs): browser-qa is ad-hoc post-deploy AI-driven QA, no committed code, no spec parsing — produces a one-shot QA report."
 ---
 
 # Browser QA — Automated Visual Testing & Interaction
