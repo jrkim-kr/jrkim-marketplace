@@ -22,8 +22,15 @@ user-invokable: true
 ## Notion DB 대상
 
 - **DB URL**: `https://www.notion.so/aisahub/307ffa74a2ce80d192dce08866752ca7`
-- **Data Source ID**: `307ffa74-a2ce-801b-847c-000b85b30ba0`
+- **Data Source ID**: `307ffa74-a2ce-801b-847c-000b85b30ba0` (검증됨)
 - **DB 이름**: IT 용어
+- **위치**: 에이사허브 워크스페이스 → 📂 Documents → Document Hub → IT 용어
+
+### MCP 서버 / 인증
+
+- 사용 도구: `mcp__notion__*` (Notion 공식 MCP, `https://mcp.notion.com/mcp`)
+- 별도 슬롯의 `mcp__claude_ai_Notion__*`도 동일 백엔드지만 OAuth 스코프가 IT 용어 DB를 포함하지 않아 404 — `mcp__notion__*`만 사용한다.
+- 신규 세션에서 `mcp__notion__*` 도구가 안 보이면 `mcp__notion__authenticate` 호출 → OAuth 화면에서 "Aisa Hub" 워크스페이스 + IT 용어 DB가 포함된 페이지 셋 선택.
 
 ## DB 컬럼 스키마
 
