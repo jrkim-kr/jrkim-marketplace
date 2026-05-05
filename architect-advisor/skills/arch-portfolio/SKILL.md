@@ -83,7 +83,13 @@ user-invokable: true
 
 ## 산출물 저장 경로
 
-`architect-advisor/<project-slug>/portfolio/`
+산출물은 **두 위치**에 저장한다:
+
+### 1) 작업 산출물 (intermediate, step별 분리)
+
+`/Users/jrkim/Projects/architect-advisor/<project-slug>/portfolio/` — workflow-state.py가 관리하는 step별 작업 파일 (star-case.md, interview-30s.md, retrospective.md, glossary.md). 다른 architect-advisor skill (decompose/council/adr/audit)과 같은 루트.
+
+**중요**: AA_ROOT는 cwd가 아니라 `/Users/jrkim/Projects/architect-advisor/`로 고정. 프로젝트 디렉토리(예: `/Users/jrkim/Projects/Aisahub/handys/`) 안에 만들지 않는다.
 
 ```bash
 cat <<'EOF' | python3 scripts/workflow-state.py save portfolio star-case
@@ -105,6 +111,58 @@ cat <<'EOF' | python3 scripts/workflow-state.py save glossary glossary
 # 누적 용어집
 ...
 EOF
+```
+
+### 2) 최종 통합 포트폴리오 (single-file, 면접 직접 사용)
+
+`/Users/jrkim/Projects/Portfolio/<descriptive-slug>.md` — 위 4개 산출물을 **하나의 파일로 통합한 면접용 마스터 문서**. 파일명은 도메인을 드러내는 서술적 슬러그(예: `ota-hotel-automation.md`).
+
+**이미 같은 도메인의 통합 포트폴리오가 있으면 새 파일을 만들지 말고 기존 파일에 머지한다**:
+- 동일 프로젝트 그룹(같은 비즈니스 도메인)이면 같은 파일을 업데이트
+- 새 회고/용어/케이스만 해당 섹션에 추가 (중복은 머지)
+- 머지 전 `ls /Users/jrkim/Projects/Portfolio/*.md`로 기존 파일 목록 확인
+
+**통합 파일 구조** (반드시 이 순서):
+
+```markdown
+# [도메인 이름] — 커리어 자산
+
+> 생성일: YYYY-MM-DD (또는 최종 업데이트일)
+> 프로젝트: project-A + project-B (관련 프로젝트 모두 나열)
+
+---
+
+## 전체 프로젝트 요약
+[ASCII 아키텍처 다이어그램 + 프로젝트 비교표 + 총 LOC/플랫폼 등 요약 메트릭]
+
+---
+
+## STAR 케이스 스터디
+### 1. project-name — 한 줄 요약
+#### 배경 (Situation) / 도전 (Challenge) / 행동 (Action) / 성과 (Result)
+[프로젝트별 반복]
+
+---
+
+## 30초 면접 요약
+### 전체 에코시스템
+#### 한국어 버전 / #### 中文版本
+
+### 프로젝트별 요약
+#### A./B./C./D. project-name (한국어 + 中文版)
+
+---
+
+## 설계 회고 (Retrospective)
+### 🟢 Keep / ### 🔴 Problem / ### 🔵 Try / ### ⏰ Revisit / ### 📚 Knowledge Gap
+
+---
+
+## 누적 용어집
+### 용어명 (中文 / English /발음/)
+#### 한국어 설명 (비유/기술 정의/적용 사례)
+#### 中文说明 (类比/技术定义/应用案例)
+[용어별 반복]
 ```
 
 ## 입력 컨텍스트
