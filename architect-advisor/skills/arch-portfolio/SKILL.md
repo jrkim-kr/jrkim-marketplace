@@ -87,25 +87,30 @@ user-invokable: true
 
 ### 1) 작업 산출물 (intermediate, step별 분리)
 
-`/Users/jrkim/Projects/Portfolio/architect-advisor/<project-slug>/portfolio/` — workflow-state.py가 관리하는 step별 작업 파일 (star-case.md, interview-30s.md, retrospective.md).
+`/Users/jrkim/Projects/architect-advisor/<project-slug>/portfolio/` — 다른 architect-advisor skill (decompose/council/adr/audit/glossary/state)과 같은 트리. workflow-state.py의 `AA_ROOT` 기준 그대로.
 
-**다른 architect-advisor skill과 경로가 다르다**:
-- decompose/council/adr/audit/state → `/Users/jrkim/Projects/architect-advisor/<slug>/...`
-- **arch-portfolio만** → `/Users/jrkim/Projects/Portfolio/architect-advisor/<slug>/portfolio/`
-
-이유: 포트폴리오 관련 산출물(작업본 + 최종 통합본)을 모두 `/Users/jrkim/Projects/Portfolio/` 트리 아래에 모아 둔다. 프로젝트 디렉토리(예: `/Users/jrkim/Projects/Aisahub/handys/`) 안에는 절대 만들지 않는다.
+**중요**: AA_ROOT는 cwd가 아니라 `/Users/jrkim/Projects/architect-advisor/`로 고정. 프로젝트 디렉토리(예: `/Users/jrkim/Projects/Aisahub/handys/`) 안에는 절대 만들지 않는다.
 
 ```bash
-# arch-portfolio 작업 산출물은 Portfolio 트리에 직접 쓴다
-# (workflow-state.py save 명령은 AA_ROOT(=Projects/architect-advisor/) 기준이라 사용하지 않는다)
+cat <<'EOF' | python3 scripts/workflow-state.py save portfolio star-case
+# STAR 케이스 스터디
+...
+EOF
 
-PORTFOLIO_DIR="/Users/jrkim/Projects/Portfolio/architect-advisor/<slug>/portfolio"
-mkdir -p "$PORTFOLIO_DIR"
+cat <<'EOF' | python3 scripts/workflow-state.py save portfolio interview-30s
+# 30초 면접 요약 (한/중)
+...
+EOF
 
-# Write 도구로 다음 파일을 직접 생성:
-#   $PORTFOLIO_DIR/star-case.md
-#   $PORTFOLIO_DIR/interview-30s.md
-#   $PORTFOLIO_DIR/retrospective.md
+cat <<'EOF' | python3 scripts/workflow-state.py save portfolio retrospective
+# 설계 회고 (Keep / Problem / Try / Revisit / Knowledge Gap)
+...
+EOF
+
+cat <<'EOF' | python3 scripts/workflow-state.py save glossary glossary
+# 누적 용어집
+...
+EOF
 ```
 
 ### 2) 최종 통합 포트폴리오 (single-file, 면접 직접 사용)
@@ -179,4 +184,4 @@ mkdir -p "$PORTFOLIO_DIR"
 
 ## 회고의 장기 누적
 
-회고는 한 프로젝트로 끝나지 않는다. **다음 프로젝트 시작 시, `/arch-decompose` 또는 `/architect-advisor`에 진입하기 전에 이전 프로젝트의 `/Users/jrkim/Projects/Portfolio/architect-advisor/<prev-slug>/portfolio/retrospective.md`의 Try·Revisit·Knowledge Gap을 먼저 읽는다.** 이것이 architect-advisor의 복리 효과(compound learning)다.
+회고는 한 프로젝트로 끝나지 않는다. **다음 프로젝트 시작 시, `/arch-decompose` 또는 `/architect-advisor`에 진입하기 전에 이전 프로젝트의 `/Users/jrkim/Projects/architect-advisor/<prev-slug>/portfolio/retrospective.md`의 Try·Revisit·Knowledge Gap을 먼저 읽는다.** 이것이 architect-advisor의 복리 효과(compound learning)다.
