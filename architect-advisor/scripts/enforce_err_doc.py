@@ -30,7 +30,7 @@ from pathlib import Path
 THIS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(THIS_DIR))
 
-from lib.resolve_error_dir import resolve_error_dir  # noqa: E402
+from lib.resolve_error_dir import resolve_error_dirs  # noqa: E402
 
 
 FIX_MESSAGE_RE = re.compile(
@@ -67,12 +67,12 @@ def _run() -> int:
     if not (project_root / ".git").exists():
         return 0  # not a git repo — nothing to enforce
 
-    err_dir = resolve_error_dir(project_root)
-    new_err_files = _staged_err_files(project_root, err_dir)
+    err_dirs = resolve_error_dirs(project_root)
+    new_err_files = _staged_err_files(project_root, err_dirs)
     if new_err_files:
         return 0  # fix commit AND ERR doc staged → allow
 
-    sys.stderr.write(_block_message(err_dir))
+    sys.stderr.write(_block_message(err_dirs))
     return 1
 
 
@@ -106,7 +106,7 @@ def _is_fix_commit(command: str) -> bool:
     return False
 
 
-def _staged_err_files(project_root: Path, err_dir: Path) -> list[str]:
+def _staged_err_files(project_root: Path, err_dirs: list[Path]) -> list[str]:
     try:
         result = subprocess.run(
             ["git", "diff", "--cached", "--name-only", "--diff-filter=A"],
@@ -127,20 +127,29 @@ def _staged_err_files(project_root: Path, err_dir: Path) -> list[str]:
             continue
         if not re.match(r"^ERR-\d+", path.name, re.IGNORECASE):
             continue
-        try:
-            path.relative_to(err_dir)
+        if any(_is_inside(path, d) for d in err_dirs):
             err_files.append(line)
-        except ValueError:
-            continue
     return err_files
 
 
-def _block_message(err_dir: Path) -> str:
+def _is_inside(target: Path, parent: Path) -> bool:
+    try:
+        target.relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+
+def _block_message(err_dirs: list[Path]) -> str:
+    if len(err_dirs) == 1:
+        loc = str(err_dirs[0])
+    else:
+        loc = "any of:\n    " + "\n    ".join(str(d) for d in err_dirs)
     return (
         "\n"
         "❌ Fix commit blocked — no ERR doc staged (CLAUDE.md §5 enforcement).\n"
         "\n"
-        f"Expected a new ERR-*.md inside {err_dir} to be staged with this commit.\n"
+        f"Expected a new ERR-*.md inside {loc} to be staged with this commit.\n"
         "\n"
         "How to fix:\n"
         "  1. Run /flush — this generates the ERR doc and runs the commit pipeline\n"

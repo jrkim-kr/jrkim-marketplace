@@ -38,7 +38,7 @@ from pathlib import Path
 THIS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(THIS_DIR))
 
-from lib.resolve_error_dir import resolve_error_dir  # noqa: E402
+from lib.resolve_error_dir import resolve_error_dirs  # noqa: E402
 from lib.advisor_paths import resolve_layout  # noqa: E402
 
 
@@ -62,11 +62,11 @@ def _run() -> int:
     if not file_path:
         return 0
 
-    err_dir = resolve_error_dir(project_root)
+    err_dirs = resolve_error_dirs(project_root)
     target = Path(file_path).resolve()
 
-    # Filter: only act on ERR-*.md inside the resolved errorDocDir
-    if not _is_inside(target, err_dir):
+    # Filter: only act on ERR-*.md inside ANY resolved errorDocDir
+    if not any(_is_inside(target, d) for d in err_dirs):
         return 0
     if not re.match(r"^ERR-\d+", target.name, re.IGNORECASE):
         return 0
