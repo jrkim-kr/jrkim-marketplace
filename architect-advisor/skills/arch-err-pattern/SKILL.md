@@ -1,6 +1,6 @@
 ---
 name: arch-err-pattern
-description: "architect-advisor 횡단 도구. `<ERR_DIR>/ERR-*.md`를 가로로 훑어 재발 충돌 패턴을 추출해 `CONFLICT_PATTERNS.md`를 생성한다. ERR_DIR은 `.flushrc.json` → `find errors/` → `./errors/` 3단계로 자동 해석된다. 다음 `writing-plans`가 자동 참조. 트리거: '패턴 추출', 'CONFLICT_PATTERNS', '冲突模式', 'extract conflict patterns'."
+description: "architect-advisor 횡단 도구. `<ERR_DIR>/ERR-*.md`를 가로로 훑어 재발 충돌 패턴을 추출해 `CONFLICT_PATTERNS.md`를 생성한다. ERR_DIR은 `.flushrc.json` → `find errors/` → `./errors/` 3단계로 자동 해석되며, 여러 `errors/` 디렉토리(예: 멀티-패키지 레포)가 있으면 모두 합류해 단일 패턴 풀로 누적된다. 다음 `writing-plans`가 자동 참조. 트리거: '패턴 추출', 'CONFLICT_PATTERNS', '冲突模式', 'extract conflict patterns'."
 argument-hint: "[ERR 디렉토리 경로 (생략 시 자동 해석)] 또는 [프로젝트 슬러그]"
 user-invokable: true
 origin: "Auto-accumulation pattern (W3.1) borrowed from ECC `continuous-learning-v2` (affaan-m/everything-claude-code) instinct extraction + project-scoped storage + confidence ladder, adapted as flush↔advisor producer-consumer split + ADR↔ERR bidirectional refs"
@@ -22,11 +22,20 @@ origin: "Auto-accumulation pattern (W3.1) borrowed from ECC `continuous-learning
 | 고위험 모듈 리팩터링 직전 | 해당 모듈 관련 과거 패턴 pre-flight 브리핑 |
 
 > **ERR_DIR 해석 규칙 (W0.1 단일 진실)**
-> 1. `.flushrc.json` 의 `errorDocDir` 필드
-> 2. `find . -type d -name "errors"` (node_modules/.git 제외)
+>
+> 단수 (`resolve_error_dir`) — 첫 매치 반환:
+> 1. `.flushrc.json` 의 `errorDocDir` (string) 또는 `errorDocDirs` (list)의 첫 항목
+> 2. `find . -type d -name "errors"` (node_modules/.git 제외) 중 가장 얕은 것
 > 3. `./errors/` (기본값)
 >
+> 복수 (`resolve_error_dirs`) — 모든 매치 반환:
+> 1. `.flushrc.json` 의 `errorDocDirs` (list) — 명시 시 우선
+> 2. `errorDocDir` (string) — 단일 항목 리스트로 반환
+> 3. `find . -type d -name "errors"` 모든 매치 (멀티-패키지 레포 지원)
+> 4. `[./errors/]` (기본값)
+>
 > `flush` 플러그인과 동일한 규칙. 이 스킬에서 `docs/errors/` 같은 경로를 하드코딩하지 말 것.
+> Hook(`err_pattern_observe.py`)과 enforcement(`enforce_err_doc.py`)는 **복수형**을 사용 — 어느 errors/에 ERR을 써도 모두 인식.
 
 ## 자동 누적 모드 (W3.1)
 
@@ -55,7 +64,7 @@ origin: "Auto-accumulation pattern (W3.1) borrowed from ECC `continuous-learning
 훅 안전 특성:
 - **fire-and-forget**: 어떤 실패도 main thread를 막지 않음 (`2>/dev/null || true`)
 - **async**: 백그라운드 실행 → 편집 응답 시간 영향 없음
-- **filter**: ERR-*.md가 `<ERR_DIR>` 안에 있을 때만 작동, 아니면 즉시 silent exit
+- **filter**: ERR-*.md가 해석된 `errors/` 디렉토리 **중 어느 하나**에 속할 때만 작동, 아니면 즉시 silent exit. 멀티-패키지 레포에선 모든 `errors/`를 동등하게 처리해 단일 풀로 누적.
 
 ### 누적 흐름
 
@@ -85,6 +94,8 @@ architect-advisor/
 ```
 
 monorepo 모드에서는 `architect-advisor/_shared/patterns/CONFLICT_PATTERNS.md` (모든 product 공유).
+
+멀티-패키지 단일-product 모드(예: 한 레포 안에 `ext_a/errors/`, `ext_b/errors/`, ...)에서는 모든 패키지의 ERR이 **루트의 `architect-advisor/`** 한 곳에 합류한다. 모듈 경로 prefix(`ext_a/...` vs `ext_b/...`)가 자연스러운 구분자 역할을 하므로 패턴 키도 패키지별로 분리되지만, **패키지 간 공통 패턴**(예: 같은 라이브러리/플랫폼을 쓰는 익스텐션들의 공통 함정)은 자동으로 한 풀에서 검출된다.
 
 ### 수동과 자동 혼용
 
