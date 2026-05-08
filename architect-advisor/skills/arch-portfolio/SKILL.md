@@ -87,7 +87,7 @@ user-invokable: true
 
 ### 1) 작업 산출물 (intermediate, step별 분리)
 
-`/Users/jrkim/Projects/architect-advisor/<project-slug>/portfolio/` — 다른 architect-advisor skill (decompose/council/adr/audit/glossary/state)과 같은 트리. workflow-state.py의 `AA_ROOT` 기준 그대로.
+`architect-advisor/portfolio/<project>/` — skill-first + project 서브디렉토리 컨벤션. 다른 architect-advisor skill (decompose/council/audit/glossary/state)과 같은 패턴. ADR은 root-flat `architect-advisor/adrs/` (W0.3).
 
 **중요**: AA_ROOT는 cwd가 아니라 `/Users/jrkim/Projects/architect-advisor/`로 고정. 프로젝트 디렉토리(예: `/Users/jrkim/Projects/Aisahub/handys/`) 안에는 절대 만들지 않는다.
 
@@ -169,7 +169,7 @@ EOF
 
 ## 입력 컨텍스트
 
-이전 step 산출물(`/Users/jrkim/Projects/architect-advisor/<slug>/{decompose,council,adr,audit}/`)이 있으면 그것을 기반으로 STAR 케이스를 풍부하게 작성한다. 없으면 사용자가 설명하는 설계 경험을 바탕으로 작성한다.
+이전 step 산출물(`architect-advisor/{decompose,council,audit}/<project>/` + `architect-advisor/adrs/`)이 있으면 그것을 기반으로 STAR 케이스를 풍부하게 작성한다. 없으면 사용자가 설명하는 설계 경험을 바탕으로 작성한다.
 
 ## 다중 프로젝트 처리
 
@@ -186,4 +186,4 @@ EOF
 
 ## 회고의 장기 누적
 
-회고는 한 프로젝트로 끝나지 않는다. **다음 프로젝트 시작 시, `/arch-decompose` 또는 `/architect-advisor`에 진입하기 전에 이전 프로젝트의 `/Users/jrkim/Projects/architect-advisor/<prev-slug>/portfolio/retrospective.md`의 Try·Revisit·Knowledge Gap을 먼저 읽는다.** 이것이 architect-advisor의 복리 효과(compound learning)다.
+회고는 한 프로젝트로 끝나지 않는다. **다음 프로젝트 시작 시, `/arch-decompose` 또는 `/architect-advisor`에 진입하기 전에 이전 프로젝트의 `architect-advisor/portfolio/<prev-project>/retrospective.md`의 Try·Revisit·Knowledge Gap을 먼저 읽는다.** 이것이 architect-advisor의 복리 효과(compound learning)다.

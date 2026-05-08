@@ -78,21 +78,28 @@ architect-advisor/
 
 ### 산출물 디렉터리 레이아웃
 
-모든 step 산출물은 프로젝트 루트의 `architect-advisor/<project>/` 트리에 저장된다.
+모든 step 산출물은 프로젝트 루트의 `architect-advisor/<skill>/<project>/` 트리에 저장된다(저장소 단위 누적 자산은 root-flat).
 
 ```
 [프로젝트 루트]/
 └── architect-advisor/
-    └── <project>/                    # 프로젝트명(예: payment-system)
-        ├── state/
-        │   └── workflow.json         # step 전환/결정/용어 누적 기록
-        ├── decompose/         # 토폴로지, 상태 머신, Blast Radius
-        ├── council/          # 방안 비교 테이블, 추천 근거
-        ├── adr/             # NNNN-title.md ADR 파일 (MADR 4.0)
-        ├── audit/             # 도메인별 리스크 시나리오 & 대응
-        ├── portfolio/         # STAR 케이스, 면접 요약, 회고
-        └── glossary/                 # 누적 용어집 (한/중/영)
+    ├── adrs/                         # repo-wide 누적 (W0.3 컨버전스)
+    │   ├── 0001-...md                # NNNN-<slug>.md (MADR 4.0)
+    │   └── README.md                 # 인덱스
+    ├── patterns/                     # repo-wide 누적 (arch-err-pattern)
+    │   ├── CONFLICT_PATTERNS.md
+    │   └── candidates.jsonl
+    ├── observations.jsonl            # repo-wide ERR 관측 풀
+    ├── state/
+    │   └── <project>/workflow.json   # 프로젝트별 step 전환/결정/용어 누적
+    ├── decompose/<project>/          # 토폴로지, 상태 머신, Blast Radius
+    ├── council/<project>/            # 방안 비교·추천·dissent
+    ├── audit/<project>/              # 도메인별 리스크 시나리오 & 대응
+    ├── portfolio/<project>/          # STAR 케이스, 면접 요약, 회고
+    └── glossary/<project>/           # 프로젝트별 누적 용어집 (한/중/영)
 ```
+
+**판단 규칙**: *프로젝트마다 1세트로 누적*되면 `<skill>/<project>/`, *저장소 단위로 한 곳에서 누적*되면 root-flat. ADR은 supersedes 체인이 cross-project로 연결되므로 root-flat, 패턴·관측은 모든 ERR을 단일 풀로 합류시키므로 root-flat.
 
 ### 컴포넌트 관계도
 
@@ -193,7 +200,7 @@ architect-advisor/
 
 **트리거**: council 확정(拍板) 직후 자동
 
-**역할**: council의 결정을 **코딩 에이전트가 추가 질문 없이 바로 구현**할 수 있는 실행 스펙(executable spec)으로 고정한다. MADR 4.0 기반 ADR 파일을 `architect-advisor/<project>/adr/NNNN-title.md` 형식으로 생성한다.
+**역할**: council의 결정을 **코딩 에이전트가 추가 질문 없이 바로 구현**할 수 있는 실행 스펙(executable spec)으로 고정한다. MADR 4.0 기반 ADR 파일을 `architect-advisor/adrs/NNNN-title.md` 형식으로 생성한다(repo-wide 누적, W0.3 컨버전스).
 
 **산출물**:
 - ADR 파일 (status / council-makers / consulted / informed 메타데이터 포함)
@@ -284,7 +291,7 @@ architect-advisor 워크플로우 없이도 용어 정리만 독립적으로 사
 | 옵션 | 사용법 |
 |------|--------|
 | 대화 내 출력 (기본) | `/term-glossary Saga 패턴` |
-| 파일 저장 | "파일로 저장해 줘" 추가 요청 → `architect-advisor/<project>/glossary/` 하위 |
+| 파일 저장 | "파일로 저장해 줘" 추가 요청 → `architect-advisor/glossary/<project>/` 하위 |
 | Notion 동기화 | "노션에도 저장해 줘" 추가 요청 |
 
 ---
@@ -329,7 +336,7 @@ architect-advisor 워크플로우 실행 시, 각 step 전환마다 자동으로
 ### 상태 파일 위치
 
 ```
-[프로젝트 루트]/architect-advisor/<project>/state/workflow.json
+[프로젝트 루트]/architect-advisor/state/<project>/workflow.json
 ```
 
 ---

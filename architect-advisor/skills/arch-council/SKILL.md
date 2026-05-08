@@ -86,8 +86,8 @@ OUTPUT (JSON only):
   "summary": "추천 = A | B (votes: 3:1)",
   "next_actions": ["/arch-adr 결정 기록"],
   "artifacts": {
-    "files": ["architect-advisor/decisions/DECISION-YYYY-MM-DD-<slug>.md"],
-    "ids": ["DECISION-<slug>"]
+    "files": ["architect-advisor/council/<project>/comparison.md"],
+    "ids": ["COUNCIL-<project>"]
   },
   "decision": {
     "recommendation": "A" | "B" | "neither",
@@ -111,13 +111,20 @@ OUTPUT (JSON only):
 ### Phase 4 — Persist (결정 저장)
 
 ```bash
-# 결정 산출물 저장
-mkdir -p architect-advisor/decisions
-cat > architect-advisor/decisions/DECISION-$(date +%Y-%m-%d)-<slug>.md <<EOF
-# DECISION: <제목>
+# 비교·추천·dissent·confidence를 통합 comparison.md로 저장
+cat <<'EOF' | python3 scripts/workflow-state.py save council comparison
+# Council Comparison — <제목>
 
-**날짜**: $(date +%Y-%m-%d)
+**날짜**: YYYY-MM-DD
 **Council 결과**: 추천 = X (votes Y:Z)
+
+## Options
+- A: ...
+- B: ...
+
+## Voices
+| Voice | Vote | Confidence | Key Concern |
+| ... | ... | ... | ... |
 
 ## 추천
 ...
@@ -129,8 +136,9 @@ cat > architect-advisor/decisions/DECISION-$(date +%Y-%m-%d)-<slug>.md <<EOF
 ## Confidence
 평균: 0.XX
 EOF
+# → architect-advisor/council/<project>/comparison.md
 
-# workflow-state에 기록
+# 방안 확정 사유를 state에 기록 (다음 /arch-adr가 자동 주입)
 python3 scripts/workflow-state.py council b "<reason>"
 ```
 
@@ -151,13 +159,12 @@ python3 scripts/workflow-state.py council b "<reason>"
 
 ## 산출물 저장 경로
 
-다른 arch-* skill(`audits/`, `adrs/`, `decompositions/`)과 동일한 **평탄 구조**. skill명 폴더 직속에 날짜+slug 파일을 둔다.
+**skill-first + project 서브디렉토리** 컨벤션. 비교·추천·확정 사유를 한 파일(`comparison.md`)에 통합 보관한다.
 
-- 합의 결과: `architect-advisor/decisions/DECISION-YYYY-MM-DD-<slug>.md`
-- 비교 산출물: `architect-advisor/council/COMPARISON-YYYY-MM-DD-<slug>.md`
-- monorepo: 위 두 경로에 `<product>/` prefix (`architect-advisor/<product>/decisions/...`, `architect-advisor/<product>/council/...`)
+- 비교·추천·합의 통합: `architect-advisor/council/<project>/comparison.md`
+- monorepo: 앞에 `<product>/` prefix (`architect-advisor/<product>/council/<project>/comparison.md`)
 
-> **명명 주의**: `council/`은 비교·추천 근거(작업 과정), `decisions/`는 합의된 최종 기록(DECISION-*)의 모음. 둘 다 평탄 구조로, project-slug 하위 폴더(`<slug>/council/comparison.md`)는 만들지 않는다 — 다른 arch-* 산출물과 일관성을 유지한다.
+> **변경 이력**: 옛 컨벤션은 `decisions/DECISION-YYYY-MM-DD-<slug>.md` + `council/COMPARISON-YYYY-MM-DD-<slug>.md` 둘로 분리된 root-flat였다. 현재는 한 파일로 통합 + per-project 서브디렉토리. 옛 파일이 남아 있으면 자동 감지·이관 대상.
 
 ## 완료 조건
 
