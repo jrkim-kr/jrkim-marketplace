@@ -38,6 +38,27 @@ DESIGN_PATH_RE = re.compile(
 )
 
 
+def _read_payload():
+    """Read Claude Code hook payload — stdin first (documented contract), env var fallback."""
+    if not sys.stdin.isatty():
+        try:
+            raw = sys.stdin.read()
+        except Exception:
+            raw = ""
+        if raw:
+            try:
+                return json.loads(raw)
+            except json.JSONDecodeError:
+                pass
+    raw = os.environ.get("CLAUDE_TOOL_INPUT", "")
+    if raw:
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            return None
+    return None
+
+
 def main() -> int:
     try:
         return _run()
@@ -47,15 +68,17 @@ def main() -> int:
 
 
 def _run() -> int:
-    raw = os.environ.get("CLAUDE_TOOL_INPUT", "")
-    if not raw:
-        return 0
-    try:
-        payload = json.loads(raw)
-    except json.JSONDecodeError:
+    payload = _read_payload()
+    if not isinstance(payload, dict):
         return 0
 
-    file_path = payload.get("file_path") or payload.get("path") or ""
+    tool_input = payload.get("tool_input") or {}
+    if isinstance(tool_input, dict):
+        file_path = tool_input.get("file_path") or tool_input.get("path") or ""
+    else:
+        file_path = ""
+    if not file_path:
+        file_path = payload.get("file_path") or payload.get("path") or ""
     if not file_path:
         return 0
 

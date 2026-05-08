@@ -110,6 +110,28 @@ def _run() -> int:
 
 
 def _extract_file_path() -> str | None:
+    # 1) Claude Code's documented PostToolUse contract: full event JSON on stdin
+    if not sys.stdin.isatty():
+        try:
+            raw_stdin = sys.stdin.read()
+        except Exception:
+            raw_stdin = ""
+        if raw_stdin:
+            try:
+                payload = json.loads(raw_stdin)
+            except json.JSONDecodeError:
+                payload = None
+            if isinstance(payload, dict):
+                tool_input = payload.get("tool_input") or {}
+                if isinstance(tool_input, dict):
+                    fp = tool_input.get("file_path") or tool_input.get("path")
+                    if fp:
+                        return fp
+                fp = payload.get("file_path") or payload.get("path")
+                if fp:
+                    return fp
+
+    # 2) Legacy env-var contract (kept for back-compat)
     raw = os.environ.get("CLAUDE_TOOL_INPUT")
     if raw:
         try:
@@ -118,6 +140,8 @@ def _extract_file_path() -> str | None:
             return None
         if isinstance(payload, dict):
             return payload.get("file_path") or payload.get("path")
+
+    # 3) argv (manual debug entry point)
     if len(sys.argv) >= 2:
         return sys.argv[1]
     return None
@@ -156,7 +180,10 @@ def _parse_err_doc(path: Path) -> dict | None:
 
 
 def _extract_modules(text: str) -> list[str]:
-    section = _extract_section(text, ["영향 모듈", "Affected Modules", "Affected", "Impact", "영향 범위"])
+    section = _extract_section(text, [
+        "영향 모듈", "Affected Modules", "Affected", "Impact", "영향 범위",
+        "관련 파일", "Related Files",
+    ])
     if not section:
         return []
     paths: list[str] = []

@@ -50,7 +50,7 @@ from lib.resolve_error_dir import resolve_error_dir, describe_resolution
 # 별칭 매핑 — architect-advisor arch-err-pattern skill과 동기화 유지
 FIELD_ALIASES = {
     "root_cause": ["근본 원인", "Root Cause", "원인", "Cause", "분석"],
-    "affected_modules": ["영향 모듈", "Affected Modules", "Affected", "Impact", "영향 범위"],
+    "affected_modules": ["영향 모듈", "Affected Modules", "Affected", "Impact", "영향 범위", "관련 파일", "Related Files"],
     "solution": ["해결책", "Solution", "Fix", "해결 방법"],
     "prevention": ["재발 방지 체크리스트", "Prevention", "Prevention Checklist", "재발 방지"],
 }

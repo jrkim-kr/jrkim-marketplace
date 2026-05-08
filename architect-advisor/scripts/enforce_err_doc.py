@@ -39,6 +39,27 @@ FIX_MESSAGE_RE = re.compile(
 )
 
 
+def _read_payload():
+    """Read Claude Code hook payload — stdin first (documented contract), env var fallback."""
+    if not sys.stdin.isatty():
+        try:
+            raw = sys.stdin.read()
+        except Exception:
+            raw = ""
+        if raw:
+            try:
+                return json.loads(raw)
+            except json.JSONDecodeError:
+                pass
+    raw = os.environ.get("CLAUDE_TOOL_INPUT", "")
+    if raw:
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            return None
+    return None
+
+
 def main() -> int:
     try:
         return _run()
@@ -48,15 +69,17 @@ def main() -> int:
 
 
 def _run() -> int:
-    raw = os.environ.get("CLAUDE_TOOL_INPUT", "")
-    if not raw:
-        return 0
-    try:
-        payload = json.loads(raw)
-    except json.JSONDecodeError:
+    payload = _read_payload()
+    if not isinstance(payload, dict):
         return 0
 
-    command = (payload.get("command") or "").strip()
+    tool_input = payload.get("tool_input") or {}
+    if isinstance(tool_input, dict):
+        command = (tool_input.get("command") or "").strip()
+    else:
+        command = ""
+    if not command:
+        command = (payload.get("command") or "").strip()
     if not command:
         return 0
 
