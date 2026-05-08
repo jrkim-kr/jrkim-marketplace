@@ -173,12 +173,12 @@ Chloe가 승인하면 `/arch-council`으로 돌아가고, 유지를 선택하면
 ## 산출물 저장 경로 (W0.3 컨버전스)
 
 ```
-architect-advisor/audit/<project>/
-├── <도메인>-audit.md                       ← 도메인별 감사 + 모든 iteration chain
-└── integration-risk.md                     ← Integration Risk (다중 모듈)
+architect-advisor/audits/
+├── AUDIT-YYYY-MM-DD-<slug>.md              ← 도메인별 감사 + 모든 iteration chain
+└── integration-risk-YYYY-MM-DD.md          ← Integration Risk (다중 모듈)
 ```
 
-monorepo 모드에서는 앞에 `<product>/` prefix (`architect-advisor/<product>/audit/<project>/`). 각 audit 파일에는 다음을 포함:
+monorepo 모드에서는 `architect-advisor/<product>/audits/`. 각 audit 파일에는 다음을 포함:
 
 ```markdown
 # AUDIT: <설계명>

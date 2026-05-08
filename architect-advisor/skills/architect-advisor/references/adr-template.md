@@ -5,7 +5,7 @@ decision-makers: "{의사결정 오너 리스트 — 拍板권자}"
 consulted: "{자문을 구한 전문가 (two-way)}"
 informed: "{결과를 공유할 이해관계자 (one-way)}"
 source: "architect-advisor council step"
-workflow-state: "architect-advisor/state/<project>/workflow.json"
+workflow-state: "architect-advisor/state/workflow.json"
 ---
 
 # {ADR 제목 — 동사구, 문제가 아닌 "결정"을 서술}
@@ -108,4 +108,4 @@ council step에서 비교한 두 방안을 그대로 기재한다. 각 방안의
 - **portfolio 산출물**: {STAR 케이스 스터디 / 면접 요약 링크}
 - **누적 용어집**: {term-glossary 산출물 링크 또는 Notion URL}
 - **재방문 트리거**: {이 ADR을 다시 열어야 할 조건 — 예: "월 결제 건수 100만 돌파 시 Saga 분리 여부 재검토"}
-- **Step 전환 기록**: `architect-advisor/state/<project>/workflow.json`
+- **Step 전환 기록**: `architect-advisor/state/workflow.json`

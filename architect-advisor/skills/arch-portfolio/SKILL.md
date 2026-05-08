@@ -83,13 +83,7 @@ user-invokable: true
 
 ## 산출물 저장 경로
 
-산출물은 **두 위치**에 저장한다:
-
-### 1) 작업 산출물 (intermediate, step별 분리)
-
-`architect-advisor/portfolio/<project>/` — skill-first + project 서브디렉토리 컨벤션. 다른 architect-advisor skill (decompose/council/audit/glossary/state)과 같은 패턴. ADR은 root-flat `architect-advisor/adrs/` (W0.3).
-
-**중요**: AA_ROOT는 cwd가 아니라 `/Users/jrkim/Projects/architect-advisor/`로 고정. 프로젝트 디렉토리(예: `/Users/jrkim/Projects/Aisahub/handys/`) 안에는 절대 만들지 않는다.
+`architect-advisor/portfolio/` 평탄 구조. 파일명에 `<slug>` 포함하여 같은 레포의 여러 이슈를 구분한다(예: `star-case-payment-saga.md`, `retrospective-payment-saga.md`). monorepo는 `architect-advisor/<product>/portfolio/`.
 
 ```bash
 cat <<'EOF' | python3 scripts/workflow-state.py save portfolio star-case
@@ -113,63 +107,9 @@ cat <<'EOF' | python3 scripts/workflow-state.py save glossary glossary
 EOF
 ```
 
-### 2) 최종 통합 포트폴리오 (single-file, 면접 직접 사용)
-
-`/Users/jrkim/Projects/Portfolio/<project-folder>-portfolio.md` — 위 4개 산출물을 **하나의 파일로 통합한 면접용 마스터 문서**.
-
-**파일명 규칙**: 항상 `<프로젝트 폴더명>-portfolio.md`. 프로젝트 폴더명은 cwd의 basename을 그대로 사용한다 (예: `/Users/jrkim/Projects/Aisahub/handys/`에서 실행 → `handys-portfolio.md`). 도메인 명칭이나 별칭으로 임의 변경하지 않는다 — workflow-state.py의 slug와 일치시켜 추적 가능하게 한다.
-
-**이미 같은 이름의 파일이 있으면 새로 만들지 말고 기존 파일에 머지한다**:
-- `<project-folder>-portfolio.md`가 존재하면 같은 파일을 업데이트
-- 새 회고/용어/케이스만 해당 섹션에 추가 (중복은 머지)
-- 머지 전 `ls /Users/jrkim/Projects/Portfolio/<project-folder>-portfolio.md` 확인
-
-**통합 파일 구조** (반드시 이 순서):
-
-```markdown
-# [도메인 이름] — 커리어 자산
-
-> 생성일: YYYY-MM-DD (또는 최종 업데이트일)
-> 프로젝트: project-A + project-B (관련 프로젝트 모두 나열)
-
----
-
-## 전체 프로젝트 요약
-[ASCII 아키텍처 다이어그램 + 프로젝트 비교표 + 총 LOC/플랫폼 등 요약 메트릭]
-
----
-
-## STAR 케이스 스터디
-### 1. project-name — 한 줄 요약
-#### 배경 (Situation) / 도전 (Challenge) / 행동 (Action) / 성과 (Result)
-[프로젝트별 반복]
-
----
-
-## 30초 면접 요약
-### 전체 에코시스템
-#### 한국어 버전 / #### 中文版本
-
-### 프로젝트별 요약
-#### A./B./C./D. project-name (한국어 + 中文版)
-
----
-
-## 설계 회고 (Retrospective)
-### 🟢 Keep / ### 🔴 Problem / ### 🔵 Try / ### ⏰ Revisit / ### 📚 Knowledge Gap
-
----
-
-## 누적 용어집
-### 용어명 (中文 / English /발음/)
-#### 한국어 설명 (비유/기술 정의/적용 사례)
-#### 中文说明 (类比/技术定义/应用案例)
-[용어별 반복]
-```
-
 ## 입력 컨텍스트
 
-이전 step 산출물(`architect-advisor/{decompose,council,audit}/<project>/` + `architect-advisor/adrs/`)이 있으면 그것을 기반으로 STAR 케이스를 풍부하게 작성한다. 없으면 사용자가 설명하는 설계 경험을 바탕으로 작성한다.
+이전 step 산출물(`architect-advisor/{decompositions,decisions,adrs,audits}/`)이 있으면 그것을 기반으로 STAR 케이스를 풍부하게 작성한다. 같은 레포에 여러 이슈가 있으면 `<slug>`로 묶어 매칭. 없으면 사용자가 설명하는 설계 경험을 바탕으로 작성한다.
 
 ## 다중 프로젝트 처리
 
@@ -186,4 +126,4 @@ EOF
 
 ## 회고의 장기 누적
 
-회고는 한 프로젝트로 끝나지 않는다. **다음 프로젝트 시작 시, `/arch-decompose` 또는 `/architect-advisor`에 진입하기 전에 이전 프로젝트의 `architect-advisor/portfolio/<prev-project>/retrospective.md`의 Try·Revisit·Knowledge Gap을 먼저 읽는다.** 이것이 architect-advisor의 복리 효과(compound learning)다.
+회고는 한 이슈로 끝나지 않는다. **다음 이슈 시작 시, `/arch-decompose` 또는 `/architect-advisor`에 진입하기 전에 같은 레포의 이전 `architect-advisor/portfolio/retrospective-*.md` 들의 Try·Revisit·Knowledge Gap을 먼저 읽는다.** 이것이 architect-advisor의 복리 효과(compound learning)다.

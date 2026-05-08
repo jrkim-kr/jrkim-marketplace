@@ -8,7 +8,7 @@
 
 ## 1. 스킬 철학 한 줄
 
-> **"로직이 먼저, 코드는 나중에"** — 비즈니스 결정을 에이전트가 바로 구현할 수 있는 **실행 가능 스펙(executable spec)** 으로 고정하고, 모든 산출물을 `architect-advisor/<skill>/<project>/` 트리에 누적해(ADR·패턴은 root-flat) 다음 프로젝트에 **복리 효과(compound learning)** 를 만든다.
+> **"로직이 먼저, 코드는 나중에"** — 비즈니스 결정을 에이전트가 바로 구현할 수 있는 **실행 가능 스펙(executable spec)** 으로 고정하고, 모든 산출물을 `architect-advisor/` 평탄 구조에(파일명에 날짜+slug 포함) 누적해 다음 이슈에 **복리 효과(compound learning)** 를 만든다.
 
 아키텍처 패턴 3종 조합 (Anthropic Agent Patterns):
 - **Prompt Chaining**: decompose → council → adr → audit → portfolio 순차 체인

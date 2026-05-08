@@ -98,14 +98,14 @@ graph TD
 ## 산출물 저장 경로 (W0.3 컨버전스)
 
 ```
-architect-advisor/decompose/<project>/
-├── steps.yaml                              ← Step YAML (cold-start safe)
-├── topology.md                             ← Mermaid 다이어그램
-├── coupling.md                             ← 결합 관계
-└── state-machine.md                        ← 상태 머신
+architect-advisor/decompositions/
+├── DECOMP-YYYY-MM-DD-<slug>.yaml          ← Step YAML (cold-start safe)
+├── topology-<slug>.md                      ← Mermaid 다이어그램
+├── coupling-<slug>.md                      ← 결합 관계
+└── state-machine-<slug>.md                 ← 상태 머신
 ```
 
-monorepo 모드에서는 앞에 `<product>/` prefix가 붙는다 (`architect-advisor/<product>/decompose/<project>/`).
+monorepo 모드에서는 `architect-advisor/<product>/decompositions/`.
 
 ```bash
 # Step YAML (W2.2 메인 산출물)
@@ -133,7 +133,7 @@ EOF
 ### 검증 (decompose 직후 자동)
 
 ```bash
-python3 scripts/validate_decompose.py architect-advisor/decompose/<project>/steps.yaml
+python3 scripts/validate_decompose.py architect-advisor/decompositions/DECOMP-*.yaml
 ```
 
 다음을 검사한다:

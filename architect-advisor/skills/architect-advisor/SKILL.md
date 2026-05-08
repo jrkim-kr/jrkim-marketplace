@@ -1,6 +1,6 @@
 ---
 name: architect-advisor
-description: "Chloe의 수석 AI 아키텍트 & PM 어드바이저. 비즈니스 기능을 5개 단독 skill(decompose/council/adr/audit/portfolio)로 설계하고 `architect-advisor/<skill>/<project>/`에 skill별로 자동 저장한다(ADR·패턴은 root-flat). 트리거: '시스템 설계', '아키텍처 결정', 'ADR', '결제·인증·정산 설계', 'MVP vs 견고한 설계', '모듈 분석', '리스크 감사', '새 의존성 도입'."
+description: "Chloe의 수석 AI 아키텍트 & PM 어드바이저. 비즈니스 기능을 5개 단독 skill(decompose/council/adr/audit/portfolio)로 설계하고 `architect-advisor/` 평탄 구조에 자동 저장한다(파일명 `<TYPE>-YYYY-MM-DD-<slug>` 또는 ADR `NNNN-<slug>`). 트리거: '시스템 설계', '아키텍처 결정', 'ADR', '결제·인증·정산 설계', 'MVP vs 견고한 설계', '모듈 분석', '리스크 감사', '새 의존성 도입'."
 argument-hint: "[기능 모듈명 또는 요구사항 설명]"
 user-invokable: true
 ---
@@ -110,23 +110,20 @@ architect-advisor로 정리하면:
 
 모든 산출물은 프로젝트 루트의 `architect-advisor/` 하위에 자동 저장된다. 파일 생성은 **에이전트가 해당 skill을 완료할 때마다** 수행한다. `scripts/workflow-state.py save <step> <filename>` 으로 stdin 파이프를 통해 저장하거나, Write 도구로 직접 기록한다.
 
-레이아웃은 **skill-first** 컨벤션을 기본으로 한다 — skill 이름을 1단계로 두고, 그 아래에 프로젝트별 서브디렉토리를 둔다. 단, **저장소 단위로 누적되는 자산**(ADR · 패턴 · 관측)은 root-flat으로 둔다.
+레이아웃은 **평탄 구조** — skill 이름 폴더 직하에 `<TYPE>-YYYY-MM-DD-<slug>` 형식 파일을 둔다(ADR만 `NNNN-<slug>` 번호 시퀀스). 한 레포(=한 architect-advisor 인스턴스)의 모든 산출물이 시간순으로 한 폴더에 누적된다.
 
-| 분류 | Step | 저장 경로 | 대표 파일 |
-|---|---|---|---|
-| **per-project** (프로젝트마다 1세트) | 상태 | `architect-advisor/state/<project>/workflow.json` | 워크플로우 진행 상태, 용어, 결정 |
-| | decompose | `architect-advisor/decompose/<project>/` | `topology.md`, `state-machine.md`, `coupling.md` |
-| | council | `architect-advisor/council/<project>/` | `comparison.md` |
-| | audit | `architect-advisor/audit/<project>/` | `<도메인>-audit.md`, `integration-risk.md` |
-| | portfolio | `architect-advisor/portfolio/<project>/` | `star-case.md`, `interview-30s.md`, `retrospective.md` |
-| | glossary | `architect-advisor/glossary/<project>/` | `glossary.md` (프로젝트별 누적 용어집) |
-| **저장소 전역** (repo-wide 누적) | adr | `architect-advisor/adrs/` | `NNNN-<슬러그>.md`, `README.md` (인덱스) — W0.3 컨버전스 |
-| | patterns | `architect-advisor/patterns/` | `CONFLICT_PATTERNS.md`, `candidates.jsonl` (`/arch-err-pattern` 산출물) |
-| | observations | `architect-advisor/observations.jsonl` | ERR 횡단 관측 풀 (모든 errors/ 합류) |
+| Step | 저장 경로 | 대표 파일 |
+|---|---|---|
+| 상태 | `architect-advisor/state/workflow.json` | 워크플로우 진행 상태, 용어, 결정 |
+| decompose | `architect-advisor/decompositions/` | `DECOMP-YYYY-MM-DD-<slug>.yaml`, `topology-<slug>.md`, `coupling-<slug>.md`, `state-machine-<slug>.md` |
+| council | `architect-advisor/decisions/` + `architect-advisor/council/` | `DECISION-YYYY-MM-DD-<slug>.md`, `COMPARISON-YYYY-MM-DD-<slug>.md` |
+| adr | `architect-advisor/adrs/` | `NNNN-<슬러그>.md`, `README.md` (인덱스) — W0.3 컨버전스 |
+| audit | `architect-advisor/audits/` | `AUDIT-YYYY-MM-DD-<slug>.md`, `integration-risk-YYYY-MM-DD.md` |
+| portfolio | `architect-advisor/portfolio/` | `star-case-<slug>.md`, `interview-30s-<slug>.md`, `retrospective-<slug>.md` |
+| — | `architect-advisor/glossary/` (또는 portfolio 안에 통합) | `glossary-<slug>.md` (누적 용어집) |
+| — | `architect-advisor/patterns/` | `CONFLICT_PATTERNS.md` (`/arch-err-pattern` 산출물) |
 
-**판단 규칙**: 산출물이 *프로젝트마다 1세트로 누적*되면 `<skill>/<project>/`, *저장소 단위로 한 곳에서 누적*되면 root-flat. ADR은 W0.3 컨버전스 레이아웃으로 root-flat이고, 패턴·관측은 `arch-err-pattern`이 모든 ERR을 합류시키므로 root-flat.
-
-**Monorepo 모드**: `.architect-advisor.json`에 `monorepo: true`가 있으면 모든 경로 앞에 `<product>/`가 붙는다 (예: `architect-advisor/<product>/council/<project>/comparison.md`). per-product 분리.
+**Monorepo 모드**: `.architect-advisor.json`에 `monorepo: true`가 있으면 모든 경로 앞에 `<product>/`가 붙는다 (예: `architect-advisor/<product>/decisions/DECISION-...md`).
 
 **구버전 호환**: project-first(`<project>/<step>/`)나 `decision/` (arch-council 도입 이전 명칭), `phase1-decompose/`, `phase2.5-adr/` 등 옛 디렉토리가 남아 있으면 `workflow-state.py`/`new_adr.py`가 자동 감지·이름 변경한다. 옛 state 파일의 `phases.*` 키와 `steps.decision`도 자동 이관된다.
 
@@ -239,7 +236,7 @@ architect-advisor로 정리하면:
 **실행 순서**:
 
 1. **방안 확정 기록**: `python3 scripts/workflow-state.py council b "<reason>"`로 결정 사유를 기록.
-2. **ADR 초안 생성**: `python3 scripts/new_adr.py --title "..." --status accepted`로 `architect-advisor/adrs/NNNN-<슬러그>.md`를 만든다(monorepo면 `architect-advisor/<product>/adrs/`). 템플릿: `references/adr-template.md`. Decision Outcome은 `workflow-state.json`의 `steps.council.decision.reason`이 자동 주입. 디렉토리 자동 탐지 우선순위는 W0.3 컨버전스 레이아웃(`architect-advisor/adrs/` → `architect-advisor/<product>/adrs/` → 레거시 project-first `architect-advisor/<slug>/adrs/`/`adr/` → `docs/decisions/` → `adr/` → `docs/adr/` → `decisions/`).
+2. **ADR 초안 생성**: `python3 scripts/new_adr.py --title "..." --status accepted`로 `architect-advisor/adrs/NNNN-<슬러그>.md`를 만든다(monorepo면 `architect-advisor/<product>/adrs/`). 템플릿: `references/adr-template.md`. Decision Outcome은 `workflow-state.json`의 `steps.council.decision.reason`이 자동 주입. 디렉토리 자동 탐지 우선순위는 W0.3 컨버전스 레이아웃(`architect-advisor/adrs/` → `architect-advisor/<product>/adrs/` → 레거시 `architect-advisor/<product>/adr/` → 옛 project-first `architect-advisor/<slug>/adrs/`/`adr/` → `docs/decisions/` → `adr/` → `docs/adr/` → `decisions/`).
 3. **섹션 채우기**: 플레이스홀더를 decompose 토폴로지·council 비교 결과로 채운다.
    - **Context**: decompose 토폴로지 링크와 트리거
    - **Decision Drivers**: council 비교 테이블의 평가 항목
@@ -299,7 +296,7 @@ decompose의 결합 관계 분석을 **동적 관점**으로 다시 본다:
 2. 새로운 의존 방향이 순환 의존을 만들지 않는가?
 3. 한 모듈 장애 시 연쇄 장애 범위가 방안 A와 B에서 각각 어떻게 다른가?
 
-결과는 `architect-advisor/audit/<project>/integration-risk.md`에 저장한다.
+결과는 `architect-advisor/audits/integration-risk-YYYY-MM-DD.md`에 저장한다.
 
 ### 감사 실행
 
@@ -422,7 +419,7 @@ decompose의 결합 관계 분석을 **동적 관점**으로 다시 본다:
 
 ### 워크플로우 상태 추적: `workflow-state.py`
 
-`scripts/workflow-state.py` — step별 진행 상태를 `architect-advisor/state/<project>/workflow.json`에 기록한다. 주요 서브커맨드:
+`scripts/workflow-state.py` — step별 진행 상태를 `architect-advisor/state/workflow.json`에 기록한다. 주요 서브커맨드:
 
 - `init "<project>"` — 워크플로우 시작
 - `step <name> in_progress|completed` — step 전환 (decompose/council/adr/audit/portfolio)

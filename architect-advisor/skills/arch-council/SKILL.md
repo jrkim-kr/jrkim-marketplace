@@ -86,8 +86,8 @@ OUTPUT (JSON only):
   "summary": "추천 = A | B (votes: 3:1)",
   "next_actions": ["/arch-adr 결정 기록"],
   "artifacts": {
-    "files": ["architect-advisor/council/<project>/comparison.md"],
-    "ids": ["COUNCIL-<project>"]
+    "files": ["architect-advisor/decisions/DECISION-YYYY-MM-DD-<slug>.md"],
+    "ids": ["DECISION-<slug>"]
   },
   "decision": {
     "recommendation": "A" | "B" | "neither",
@@ -111,20 +111,13 @@ OUTPUT (JSON only):
 ### Phase 4 — Persist (결정 저장)
 
 ```bash
-# 비교·추천·dissent·confidence를 통합 comparison.md로 저장
-cat <<'EOF' | python3 scripts/workflow-state.py save council comparison
-# Council Comparison — <제목>
+# 결정 산출물 저장
+mkdir -p architect-advisor/decisions
+cat > architect-advisor/decisions/DECISION-$(date +%Y-%m-%d)-<slug>.md <<EOF
+# DECISION: <제목>
 
-**날짜**: YYYY-MM-DD
+**날짜**: $(date +%Y-%m-%d)
 **Council 결과**: 추천 = X (votes Y:Z)
-
-## Options
-- A: ...
-- B: ...
-
-## Voices
-| Voice | Vote | Confidence | Key Concern |
-| ... | ... | ... | ... |
 
 ## 추천
 ...
@@ -136,9 +129,8 @@ cat <<'EOF' | python3 scripts/workflow-state.py save council comparison
 ## Confidence
 평균: 0.XX
 EOF
-# → architect-advisor/council/<project>/comparison.md
 
-# 방안 확정 사유를 state에 기록 (다음 /arch-adr가 자동 주입)
+# workflow-state에 기록
 python3 scripts/workflow-state.py council b "<reason>"
 ```
 
@@ -159,12 +151,14 @@ python3 scripts/workflow-state.py council b "<reason>"
 
 ## 산출물 저장 경로
 
-**skill-first + project 서브디렉토리** 컨벤션. 비교·추천·확정 사유를 한 파일(`comparison.md`)에 통합 보관한다.
+W0.3 컨버전스 레이아웃:
 
-- 비교·추천·합의 통합: `architect-advisor/council/<project>/comparison.md`
-- monorepo: 앞에 `<product>/` prefix (`architect-advisor/<product>/council/<project>/comparison.md`)
+- 단일 product: `architect-advisor/decisions/DECISION-YYYY-MM-DD-<slug>.md`
+- monorepo: `architect-advisor/<product>/decisions/DECISION-...md`
 
-> **변경 이력**: 옛 컨벤션은 `decisions/DECISION-YYYY-MM-DD-<slug>.md` + `council/COMPARISON-YYYY-MM-DD-<slug>.md` 둘로 분리된 root-flat였다. 현재는 한 파일로 통합 + per-project 서브디렉토리. 옛 파일이 남아 있으면 자동 감지·이관 대상.
+비교 자체는 `architect-advisor/council/COMPARISON-YYYY-MM-DD-<slug>.md`에 보존(워크플로우 step 산출물).
+
+> **명명 주의**: 단수 `<slug>/council/`은 council step의 작업 디렉토리(비교표·추천 근거). 복수 `decisions/`는 합의된 결과(DECISION-* 기록)의 모음. 작업 과정과 최종 기록을 디렉토리 이름으로 구분한다.
 
 ## 완료 조건
 
