@@ -52,7 +52,7 @@ FIELD_ALIASES = {
     "root_cause": ["근본 원인", "Root Cause", "원인", "Cause", "분석"],
     "affected_modules": ["영향 모듈", "Affected Modules", "Affected", "Impact", "영향 범위", "관련 파일", "Related Files"],
     "solution": ["해결책", "Solution", "Fix", "해결 방법"],
-    "prevention": ["재발 방지 체크리스트", "Prevention", "Prevention Checklist", "재발 방지"],
+    "prevention": ["재발 방지 체크리스트", "Prevention", "Prevention Checklist", "재발 방지", "예방 체크리스트", "예방"],
 }
 
 H1_RE = re.compile(r"^#\s+(.+?)\s*$", re.MULTILINE)
