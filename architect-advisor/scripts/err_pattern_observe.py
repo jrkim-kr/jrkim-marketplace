@@ -115,6 +115,37 @@ def _run() -> int:
     return 0
 
 
+def _derive_product(target: Path, project_root: Path) -> str | None:
+    """Monorepo product attribution.
+
+    Reads `.architect-advisor.json` from project_root. If `monorepo: true` and a
+    `products` list is declared, walks the ERR file's path segments (relative to
+    project_root) and returns the first segment that matches a declared product
+    slug. Returns None in single-product mode or if no match.
+    """
+    cfg_path = project_root / ".architect-advisor.json"
+    if not cfg_path.is_file():
+        return None
+    try:
+        cfg = json.loads(cfg_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return None
+    if not cfg.get("monorepo"):
+        return None
+    products = cfg.get("products") or []
+    if not products:
+        return None
+    try:
+        rel = target.relative_to(project_root)
+    except ValueError:
+        return None
+    products_set = set(products)
+    for part in rel.parts:
+        if part in products_set:
+            return part
+    return None
+
+
 def _emit_session_reminder(parsed: dict) -> None:
     """Inject an additionalContext system reminder so the active agent runs
     pattern extraction inline (same turn, no API key, with active notification)."""
