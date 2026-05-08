@@ -151,14 +151,13 @@ python3 scripts/workflow-state.py council b "<reason>"
 
 ## 산출물 저장 경로
 
-W0.3 컨버전스 레이아웃:
+다른 arch-* skill(`audits/`, `adrs/`, `decompositions/`)과 동일한 **평탄 구조**. skill명 폴더 직속에 날짜+slug 파일을 둔다.
 
-- 단일 product: `architect-advisor/decisions/DECISION-YYYY-MM-DD-<slug>.md`
-- monorepo: `architect-advisor/<product>/decisions/DECISION-...md`
+- 합의 결과: `architect-advisor/decisions/DECISION-YYYY-MM-DD-<slug>.md`
+- 비교 산출물: `architect-advisor/council/COMPARISON-YYYY-MM-DD-<slug>.md`
+- monorepo: 위 두 경로에 `<product>/` prefix (`architect-advisor/<product>/decisions/...`, `architect-advisor/<product>/council/...`)
 
-비교 자체는 `architect-advisor/<slug>/council/comparison.md`에도 보존(워크플로우 step 산출물).
-
-> **명명 주의**: 단수 `<slug>/council/`은 council step의 작업 디렉토리(비교표·추천 근거). 복수 `decisions/`는 합의된 결과(DECISION-* 기록)의 모음. 작업 과정과 최종 기록을 디렉토리 이름으로 구분한다.
+> **명명 주의**: `council/`은 비교·추천 근거(작업 과정), `decisions/`는 합의된 최종 기록(DECISION-*)의 모음. 둘 다 평탄 구조로, project-slug 하위 폴더(`<slug>/council/comparison.md`)는 만들지 않는다 — 다른 arch-* 산출물과 일관성을 유지한다.
 
 ## 완료 조건
 
