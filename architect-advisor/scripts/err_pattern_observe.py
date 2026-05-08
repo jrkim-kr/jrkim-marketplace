@@ -95,18 +95,42 @@ def _run() -> int:
     with observations_file.open("a", encoding="utf-8") as f:
         f.write(json.dumps(obs_record, ensure_ascii=False) + "\n")
 
-    # Candidate accumulation (offline lightweight analyzer)
+    # Emit a same-turn reminder so the active Claude Code session runs the
+    # arch-err-pattern skill in-session (no separate process, no API key).
+    _emit_session_reminder(parsed)
+
+    # Candidate accumulation kept for audit/debug only.
+    # CONFLICT_PATTERNS.md is now owned by the arch-err-pattern skill (triggered above)
+    # which performs LLM-driven root-cause induction beyond simple pair coupling.
     candidate = _build_candidate(parsed)
     if candidate is not None:
         candidates_file = layout.candidates_file()
         candidates_file.parent.mkdir(parents=True, exist_ok=True)
         _upsert_candidate(candidates_file, candidate)
 
-        # Promotion check
-        if _should_promote(candidates_file, candidate["pattern_key"]):
-            _promote_to_conflict_patterns(layout, candidates_file, candidate["pattern_key"])
-
     return 0
+
+
+def _emit_session_reminder(parsed: dict) -> None:
+    """Inject an additionalContext system reminder so the active agent runs
+    pattern extraction inline (same turn, no API key, with active notification)."""
+    output = {
+        "hookSpecificOutput": {
+            "hookEventName": "PostToolUse",
+            "additionalContext": (
+                f"[arch-err-pattern auto-accumulation] "
+                f"{parsed['err_id']} 관측이 architect-advisor/observations.jsonl 에 기록되었습니다. "
+                f"이번 응답이 끝나기 전에 다음을 수행하세요:\n"
+                f"1. Skill 도구로 'architect-advisor:arch-err-pattern' 호출 "
+                f"(누적된 모든 ERR을 LLM으로 횡단 귀납하여 CONFLICT_PATTERNS.md 갱신)\n"
+                f"2. 신규/승격된 패턴이 있으면 사용자에게 1-3줄로 능동 보고. "
+                f"변화가 없으면 'pattern 변화 없음'만 한 줄.\n"
+                f"3. 사용자가 명시적으로 다른 작업 중이라도, 이 보고는 응답 마지막에 반드시 포함."
+            ),
+        }
+    }
+    sys.stdout.write(json.dumps(output, ensure_ascii=False))
+    sys.stdout.flush()
 
 
 def _extract_file_path() -> str | None:
