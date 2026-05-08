@@ -12,9 +12,10 @@ Layout (single-product, default):
         ├── adrs/
         ├── audits/
         ├── decompositions/
-        ├── patterns/CONFLICT_PATTERNS.md
-        ├── patterns/candidates.jsonl
-        ├── observations.jsonl
+        ├── patterns/
+        │   ├── CONFLICT_PATTERNS.md
+        │   ├── candidates.jsonl
+        │   └── observations.jsonl
         ├── portfolio/
         └── _meta/
 
@@ -79,7 +80,9 @@ class AdvisorLayout:
         return self.patterns_dir() / "candidates.jsonl"
 
     def observations_file(self) -> Path:
-        return self.advisor_root / "observations.jsonl"
+        # Co-located with candidates.jsonl under patterns/ — both are
+        # pattern-extraction state written by the same hook in the same flow.
+        return self.patterns_dir() / "observations.jsonl"
 
     def portfolio_dir(self) -> Path:
         return self.advisor_root / "portfolio"

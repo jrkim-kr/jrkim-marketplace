@@ -87,8 +87,8 @@ err_pattern_observe.py
 
 ```
 architect-advisor/
-├── observations.jsonl           ← 모든 ERR 관측 로그 (감사용)
 └── patterns/
+    ├── observations.jsonl       ← 모든 ERR 관측 로그 (감사용)
     ├── candidates.jsonl         ← 낮은 confidence pattern (대기열)
     └── CONFLICT_PATTERNS.md     ← 정식 패턴 (writing-plans가 자동 참조)
 ```
