@@ -4,10 +4,15 @@
 architect-advisor 워크플로우 상태 관리 스크립트.
 
 각 skill 단계의 진행 상태, 수집된 용어, 선택된 방안 등을 JSON으로 추적한다.
-모든 산출물은 프로젝트 루트의 `architect-advisor/<project-slug>/` 하위에
-**skill 이름 디렉토리**로 저장된다 (멀티 프로젝트 지원). Phase 번호는 사용하지
-않으며, skill은 독립 호출 가능한 단위다 — 다만 권장 작업 순서는
-`decompose → council → adr → audit → portfolio`.
+
+**레이아웃 두 모드** (advisor_paths.resolve_layout 과 정합):
+- Single-product (default, `.architect-advisor.json` 없음): 모든 산출물은
+  `architect-advisor/` **바로 아래**에 평면으로 저장.
+- Monorepo (`.architect-advisor.json` 의 `monorepo: true`): 산출물은
+  `architect-advisor/<product-slug>/` 하위에 product별로 분리.
+
+Phase 번호는 사용하지 않으며, skill은 독립 호출 가능한 단위다 — 다만 권장 작업
+순서는 `decompose → council → adr → audit → portfolio`.
 
 사용법:
     python3 workflow-state.py init <project-name>            # 새 워크플로우 시작
@@ -22,15 +27,15 @@ architect-advisor 워크플로우 상태 관리 스크립트.
     python3 workflow-state.py [--project X] reset [--purge-artifacts]
     python3 workflow-state.py list-projects                  # 등록된 프로젝트 목록
 
-멀티 프로젝트 경로 스키마:
-    architect-advisor/<slug>/state/workflow.json   — 워크플로우 상태
-    architect-advisor/<slug>/decompose/            — 토폴로지, 상태머신, 결합관계
-    architect-advisor/<slug>/council/              — 4-voice 비교표, 추천 근거
-    architect-advisor/<slug>/adr/NNNN-*.md         — ADR (new_adr.py가 저장)
-    architect-advisor/<slug>/audit/                — 리스크 감사 결과
-    architect-advisor/<slug>/portfolio/            — STAR 케이스, 면접 요약
-    architect-advisor/<slug>/glossary/             — 누적 용어집
-    architect-advisor/<slug>/patterns/             — CONFLICT_PATTERNS 등 횡단 산출물
+경로 스키마 (single-product / monorepo 차이는 `<slug>/` 한 단계뿐):
+    architect-advisor/[<slug>/]state/workflow.json   — 워크플로우 상태
+    architect-advisor/[<slug>/]decompose/            — 토폴로지, 상태머신, 결합관계
+    architect-advisor/[<slug>/]council/              — 4-voice 비교표, 추천 근거
+    architect-advisor/[<slug>/]adr/NNNN-*.md         — ADR (new_adr.py가 저장)
+    architect-advisor/[<slug>/]audit/                — 리스크 감사 결과
+    architect-advisor/[<slug>/]portfolio/            — STAR 케이스, 면접 요약
+    architect-advisor/[<slug>/]glossary/             — 누적 용어집
+    architect-advisor/[<slug>/]patterns/             — CONFLICT_PATTERNS 등 횡단 산출물
 
 자동 마이그레이션:
     1. 평면 레이아웃 (architect-advisor/{state,decompose,...}) → 슬러그 하위로 이동
@@ -53,6 +58,27 @@ from datetime import datetime, timezone
 
 
 AA_ROOT = os.path.join(os.getcwd(), "architect-advisor")
+
+ADVISOR_CONFIG_FILENAME = ".architect-advisor.json"
+
+
+def _load_advisor_config() -> dict:
+    """Read .architect-advisor.json from cwd. Empty dict if missing/invalid."""
+    cfg_path = os.path.join(os.getcwd(), ADVISOR_CONFIG_FILENAME)
+    if not os.path.isfile(cfg_path):
+        return {}
+    try:
+        with open(cfg_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def is_monorepo() -> bool:
+    """True iff .architect-advisor.json declares monorepo mode.
+    Single-product mode (default) uses a flat layout with no <slug>/ subdir —
+    aligned with advisor_paths.resolve_layout()."""
+    return bool(_load_advisor_config().get("monorepo"))
 
 # step 이름 → 산출물 디렉토리 이름 (슬러그 하위에 공통으로 붙음)
 # glossary/patterns는 단독 step이 아니라 횡단 산출물이지만 저장 목표로 허용.
@@ -142,6 +168,11 @@ def legacy_state_path() -> str:
 # ---------------------------------------------------------------------------
 
 def project_root(slug: str) -> str:
+    """In single-product mode (no monorepo config), all artifacts live directly
+    under architect-advisor/ — slug is ignored. In monorepo mode, slug is the
+    product subdirectory under architect-advisor/."""
+    if not is_monorepo():
+        return AA_ROOT
     return os.path.join(AA_ROOT, slug)
 
 
@@ -192,8 +223,14 @@ def write_active_slug(slug: str) -> None:
 
 
 def list_project_slugs() -> list[str]:
-    """`architect-advisor/*/state/workflow.json`이 존재하는 모든 프로젝트."""
+    """`architect-advisor/*/state/workflow.json`이 존재하는 모든 프로젝트.
+    Single-product 모드에서는 architect-advisor/state/workflow.json 하나만
+    인식되며, slug는 cwd basename으로 nominally 부여 (project_root 가 무시)."""
     if not os.path.isdir(AA_ROOT):
+        return []
+    if not is_monorepo():
+        if os.path.isfile(os.path.join(AA_ROOT, "state", "workflow.json")):
+            return [slugify(os.path.basename(os.getcwd()))]
         return []
     slugs = []
     for name in sorted(os.listdir(AA_ROOT)):
@@ -209,9 +246,11 @@ def list_project_slugs() -> list[str]:
 
 
 def migrate_flat_layout_if_any(preferred_slug: str | None = None) -> str | None:
-    """`architect-advisor/{state,...}/…`가 평면으로 남아 있으면 프로젝트 슬러그
-    아래로 이동시킨다. 마이그레이션된 경우 슬러그를 반환, 아니면 None."""
+    """Monorepo 모드에서 옛 평면 레이아웃을 슬러그 하위로 이동.
+    Single-product 모드에서는 평면이 정식 레이아웃이므로 no-op."""
     if not os.path.isdir(AA_ROOT):
+        return None
+    if not is_monorepo():
         return None
 
     flat_state = os.path.join(AA_ROOT, "state", "workflow.json")
