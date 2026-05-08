@@ -19,8 +19,8 @@ Layout (single-product, default):
         └── _meta/
 
 Layout (monorepo):
-    [project_root]/architect-advisor/<product>/<same subdirs>
-    [project_root]/architect-advisor/_shared/patterns/CONFLICT_PATTERNS.md
+    [project_root]/architect-advisor/<product>/<same subdirs incl. patterns/>
+    (No _shared/ — per-product separation aligned with workflow-state.py)
 
 Resolution rules:
   1. Read .architect-advisor.json if present (cached detection result).
@@ -68,8 +68,8 @@ class AdvisorLayout:
         return self.advisor_root / "decompositions"
 
     def patterns_dir(self) -> Path:
-        if self.is_monorepo:
-            return self.project_root / ROOT_DIR_NAME / "_shared" / "patterns"
+        # SSoT with workflow-state.py: patterns live alongside other step
+        # outputs, scoped to advisor_root (which is per-product in monorepo mode).
         return self.advisor_root / "patterns"
 
     def conflict_patterns_file(self) -> Path:

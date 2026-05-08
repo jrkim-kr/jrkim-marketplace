@@ -75,7 +75,11 @@ def _run() -> int:
     if not target.is_file():
         return 0
 
-    layout = resolve_layout(project_root)
+    # In monorepo mode, attribute the ERR to its product by walking the
+    # ERR file's path relative to project_root and matching against the
+    # configured products list. Single-product mode skips this entirely.
+    product = _derive_product(target, project_root)
+    layout = resolve_layout(project_root, product=product)
 
     # Parse the ERR doc
     parsed = _parse_err_doc(target)
