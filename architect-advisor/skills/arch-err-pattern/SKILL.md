@@ -134,7 +134,11 @@ JSON을 받아 아래 규칙으로 패턴 도출:
 
 ### 3. 문서 생성
 
-`architect-advisor/<project>/patterns/CONFLICT_PATTERNS.md`에 저장. 구조:
+저장 경로 (advisor_paths.resolve_layout 단일 진실):
+- Single-product (`.architect-advisor.json` 없음): `architect-advisor/patterns/CONFLICT_PATTERNS.md`
+- Monorepo (`monorepo: true`): `architect-advisor/<product>/patterns/CONFLICT_PATTERNS.md`
+
+구조:
 
 ```markdown
 # 충돌 패턴 분석 (Conflict Patterns)
