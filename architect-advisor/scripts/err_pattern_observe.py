@@ -62,12 +62,9 @@ def _run() -> int:
     if not file_path:
         return 0
 
-    err_dirs = resolve_error_dirs(project_root)
     target = Path(file_path).resolve()
 
-    # Filter: only act on ERR-*.md inside ANY resolved errorDocDir
-    if not any(_is_inside(target, d) for d in err_dirs):
-        return 0
+    # Quick syntax filters (don't need anchor for these)
     if not re.match(r"^ERR-\d+", target.name, re.IGNORECASE):
         return 0
     if target.suffix.lower() != ".md":
@@ -82,7 +79,8 @@ def _run() -> int:
     if anchor is not None:
         project_root = anchor
 
-    # Re-resolve err_dirs against the anchored project_root.
+    # Resolve err_dirs against the anchored project_root, then verify the
+    # ERR file actually lives inside one of them.
     err_dirs = resolve_error_dirs(project_root)
     if not any(_is_inside(target, d) for d in err_dirs):
         return 0
