@@ -75,9 +75,20 @@ def _run() -> int:
     if not target.is_file():
         return 0
 
-    # In monorepo mode, attribute the ERR to its product by walking the
-    # ERR file's path relative to project_root and matching against the
-    # configured products list. Single-product mode skips this entirely.
+    # Anchor project_root to the ERR file's repo, not the cwd. This keeps
+    # data per-repo regardless of where Claude Code was started.
+    # Priority: existing architect-advisor/ (respect prior setup) → .git → cwd.
+    anchor = _find_advisor_anchor(target.parent)
+    if anchor is not None:
+        project_root = anchor
+
+    # Re-resolve err_dirs against the anchored project_root.
+    err_dirs = resolve_error_dirs(project_root)
+    if not any(_is_inside(target, d) for d in err_dirs):
+        return 0
+
+    # Within-repo monorepo support (e.g. ota-admin-scraper declaring
+    # 3 sub-products in its own .architect-advisor.json).
     product = _derive_product(target, project_root)
     layout = resolve_layout(project_root, product=product)
 
