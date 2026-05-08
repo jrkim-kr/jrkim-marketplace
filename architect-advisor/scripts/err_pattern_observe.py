@@ -126,6 +126,24 @@ def _run() -> int:
     return 0
 
 
+def _find_advisor_anchor(start: Path) -> Path | None:
+    """Walk up from `start` looking for the canonical project root for this
+    ERR file. Priority:
+      1. Existing `architect-advisor/` directory (respects user's prior setup)
+      2. `.git/` directory (canonical repo root)
+    Returns None if neither found at any ancestor (caller falls back to cwd).
+    """
+    current = start.resolve()
+    while True:
+        if (current / "architect-advisor").is_dir():
+            return current
+        if (current / ".git").exists():
+            return current
+        if current.parent == current:
+            return None
+        current = current.parent
+
+
 def _derive_product(target: Path, project_root: Path) -> str | None:
     """Monorepo product attribution.
 
