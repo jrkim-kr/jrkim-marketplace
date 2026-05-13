@@ -1,0 +1,10 @@
+{
+  "name": "roundtable",
+  "version": "1.0.0",
+  "description": "Multi-persona PRD/spec/RFC roundtable review — 4-6 personas (backbone PM+CTO+Growth, domain 1-2, optional triggers CSO/Designer/CEO) deliberating in 3 rounds (opinion → rebuttal → synthesis). Plan-verify frame consistency via 7-category completeness checklist.",
+  "author": {
+    "name": "jrkim"
+  },
+  "license": "MIT",
+  "keywords": ["prd-review", "spec-review", "multi-persona", "stakeholder", "roundtable", "design-review"]
+}

@@ -35,6 +35,12 @@
       "description": "AI-driven post-deploy QA via browser automation. Borrowed from ECC.",
       "source": "./browser-qa",
       "category": "development"
+    },
+    {
+      "name": "roundtable",
+      "description": "Multi-persona PRD/spec/RFC roundtable — 4-6 personas (PM·CTO·Growth backbone + 1-2 domain + optional CSO/Designer/CEO triggers) in 3-round deliberation with category-driven plan-verify",
+      "source": "./roundtable",
+      "category": "development"
     }
   ]
 }
