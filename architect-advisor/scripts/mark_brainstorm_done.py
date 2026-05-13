@@ -14,14 +14,17 @@ Reads:
   CLAUDE_PROJECT_DIR project root (if missing, falls back to cwd)
 
 Writes:
-  ~/.claude/state/brainstorm-pending-router.json
+  ~/.claude/state/brainstorm-pending-router-<hash>.json
     {"design_path": "...", "ts": 1234567890, "project_root": "..."}
+  The <hash> is sha1(project_root)[:8] so each project has its own marker
+  and a brainstorm in project A does not gate writing-plans in project B.
 
 This is fire-and-forget — never raises, never blocks.
 """
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -31,7 +34,11 @@ from pathlib import Path
 
 
 STATE_DIR = Path.home() / ".claude" / "state"
-STATE_FILE = STATE_DIR / "brainstorm-pending-router.json"
+
+
+def _state_file_for(project_root: str) -> Path:
+    digest = hashlib.sha1(str(Path(project_root).resolve()).encode()).hexdigest()[:8]
+    return STATE_DIR / f"brainstorm-pending-router-{digest}.json"
 
 DESIGN_PATH_RE = re.compile(
     r"docs/superpowers/specs/\d{4}-\d{2}-\d{2}-[^/]+-design\.md$"
@@ -86,6 +93,7 @@ def _run() -> int:
         return 0
 
     project_root = os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())
+    state_file = _state_file_for(project_root)
 
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     record = {
@@ -93,7 +101,7 @@ def _run() -> int:
         "ts": int(time.time()),
         "project_root": str(Path(project_root).resolve()),
     }
-    STATE_FILE.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
+    state_file.write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
 
     return 0
 

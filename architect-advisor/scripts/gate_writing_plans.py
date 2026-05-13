@@ -7,12 +7,16 @@ If the brainstorming skill recently produced a design doc (state file
 written by mark_brainstorm_done.py), and the router hasn't run yet, we
 block writing-plans and prompt the user to run brainstorm-router first.
 
+The state file is scoped per project (sha1(project_root)[:8] suffix), so
+a brainstorm in project A does not gate writing-plans in project B.
+
 The user can clear the gate by either:
   - Running /arch-advisor flow (which uses brainstorm-router)
-  - Manually deleting ~/.claude/state/brainstorm-pending-router.json
+  - Manually deleting the per-project state file shown in the block message
 
 Reads:
   CLAUDE_TOOL_INPUT  JSON, e.g. {"skill": "superpowers:writing-plans"}
+  CLAUDE_PROJECT_DIR project root (if missing, falls back to cwd)
 
 Exit codes:
   0 — allow tool call
@@ -22,6 +26,7 @@ Exit codes:
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sys
@@ -29,7 +34,12 @@ import time
 from pathlib import Path
 
 
-STATE_FILE = Path.home() / ".claude" / "state" / "brainstorm-pending-router.json"
+STATE_DIR = Path.home() / ".claude" / "state"
+
+
+def _state_file_for(project_root: str) -> Path:
+    digest = hashlib.sha1(str(Path(project_root).resolve()).encode()).hexdigest()[:8]
+    return STATE_DIR / f"brainstorm-pending-router-{digest}.json"
 
 # Match writing-plans skill across naming variations
 WRITING_PLANS_NAMES = {
@@ -64,11 +74,14 @@ def _run() -> int:
     if skill_name not in WRITING_PLANS_NAMES:
         return 0
 
-    if not STATE_FILE.is_file():
+    project_root = os.environ.get("CLAUDE_PROJECT_DIR", os.getcwd())
+    state_file = _state_file_for(project_root)
+
+    if not state_file.is_file():
         return 0
 
     try:
-        state = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        state = json.loads(state_file.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return 0
 
@@ -76,16 +89,16 @@ def _run() -> int:
     if isinstance(ts, (int, float)) and (time.time() - ts) > STALE_AFTER_SECONDS:
         # Stale state — clean up and let through
         try:
-            STATE_FILE.unlink()
+            state_file.unlink()
         except OSError:
             pass
         return 0
 
-    sys.stderr.write(_block_message(state))
+    sys.stderr.write(_block_message(state, state_file))
     return 1
 
 
-def _block_message(state: dict) -> str:
+def _block_message(state: dict, state_file: Path) -> str:
     return (
         "\n"
         "🛑 writing-plans blocked — brainstorming finished but brainstorm-router hasn't run (CLAUDE.md §7).\n"
@@ -97,7 +110,7 @@ def _block_message(state: dict) -> str:
         "  - Or run /architect-advisor (which routes through it automatically)\n"
         "\n"
         "If you've already run the router and want to skip this gate:\n"
-        f"  rm {STATE_FILE}\n"
+        f"  rm {state_file}\n"
     )
 
 
