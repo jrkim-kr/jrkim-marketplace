@@ -41,6 +41,12 @@
       "description": "Multi-persona PRD/spec/RFC roundtable — 4-6 personas (PM·CTO·Growth backbone + 1-2 domain + optional CSO/Designer/CEO triggers) in 3-round deliberation with category-driven plan-verify",
       "source": "./roundtable",
       "category": "development"
+    },
+    {
+      "name": "should-i-use",
+      "description": "Structured first-look evaluation of external tools against a user persona — 8-section report with a one-word verdict",
+      "source": "./should-i-use",
+      "category": "development"
     }
   ]
 }

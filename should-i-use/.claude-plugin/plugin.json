@@ -1,0 +1,10 @@
+{
+  "name": "should-i-use",
+  "version": "1.0.0",
+  "description": "Structured first-look evaluation of external tools, repos, MCP servers, and skills against a user persona profile — single-pass 8-section report with a one-word verdict",
+  "author": {
+    "name": "jrkim"
+  },
+  "license": "MIT",
+  "keywords": ["tool-evaluation", "adoption", "dependency-review", "persona", "should-i-use"]
+}
