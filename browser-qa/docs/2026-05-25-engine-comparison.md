@@ -53,7 +53,7 @@ Playwright agent loop 耗时主要由 MCP transport latency 主导；agent-brows
 
 | 页面 | Playwright | agent-browser | 差异 |
 |---|---|---|---|
-| geared.ai 首页 | 7000 B / 134 行 | 7106 B / 159 行 | 相当 |
+| 测试网站首页 | 7000 B / 134 行 | 7106 B / 159 行 | 相当 |
 | /course | 5640 B | 3818 B / 96 行 | ab 小约 32% |
 | /enterprise-edu | 17618 B | 11737 B / 344 行 | ab 小约 33% |
 
@@ -116,7 +116,7 @@ URL 没切换。Playwright 同操作直接跳到了 `/course`。
 | 场景 | Playwright MCP | agent-browser | Chloe 短期触发概率 |
 |---|---|---|---|
 | Web 浏览器 QA | ✓ | ✓ | 高（已在用 Playwright） |
-| Electron 桌面应用 | ❌ | ✓ `electron` | **很低** — Aisahub/Personal 全是 web stack |
+| Electron 桌面应用 | ❌ | ✓ `electron` | **很低** — 绝大多数项目是 web stack |
 | Slack 工作区自动化 | ❌ | ✓ `slack` | **低** — Slack API + 官方 MCP 更专业 |
 | AI 自然语言 REPL | △ via Claude Code | ✓ `chat` | **很低** — 已通过 Claude Code + Playwright 实现等价 |
 | Vercel Sandbox microVM | ❌ | ✓ `vercel-sandbox` | **很低** — 当前无该场景 |
