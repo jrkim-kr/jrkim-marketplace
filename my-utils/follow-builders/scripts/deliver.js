@@ -227,4 +227,7 @@ async function main() {
   }
 }
 
-main();
+// run as CLI only (not when imported by tests)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main();
+}
