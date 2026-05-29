@@ -371,7 +371,7 @@ Assemble the digest following `prompts.digest_intro`.
 
 ### Step 5: Apply language
 
-**If `config.delivery.format === "html"`:** Do NOT produce interleaved text.
+**If `config.delivery.format === "html"` AND `config.delivery.method === "email"`:** Do NOT produce interleaved text.
 Instead assemble a single JSON object and write it to `/tmp/fb-digest.json`,
 with this shape (every item needs a real link; every summary needs zh+en+ko):
 
@@ -428,7 +428,7 @@ Read `config.language` from the JSON:
 
 ### Step 6: Deliver
 
-**If `config.delivery.format === "html"`:** render then send as attachment, with a
+**If `config.delivery.format === "html"` AND `config.delivery.method === "email"`:** render then send as attachment, with a
 plain-text fallback so a bad render never drops the day's digest:
 
 ```bash
