@@ -124,6 +124,19 @@ async function sendTelegram(text, botToken, chatId) {
 
 // -- Email Delivery (Resend) -------------------------------------------------
 
+// Builds the Resend request body for an HTML-attachment digest email.
+// Pure + exported so it can be unit-tested without hitting the network.
+export function buildEmailPayload({ htmlContent, bodyText, toEmail, dateStr }) {
+  const base64 = Buffer.from(htmlContent, 'utf-8').toString('base64');
+  return {
+    from: 'AI Builders Digest <digest@resend.dev>',
+    to: [toEmail],
+    subject: `AI Builders Digest — ${dateStr}`,
+    text: (bodyText && bodyText.trim()) ? bodyText : '今日 AI Builders Digest，详见附件。',
+    attachments: [{ filename: `AI-Builders-Digest-${dateStr}.html`, content: base64 }]
+  };
+}
+
 // Sends the digest via Resend's email API.
 // The user provides their own Resend API key and email address.
 async function sendEmail(text, apiKey, toEmail) {
