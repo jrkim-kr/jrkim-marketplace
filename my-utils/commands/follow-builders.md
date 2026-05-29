@@ -433,6 +433,7 @@ plain-text fallback so a bad render never drops the day's digest:
 
 ```bash
 cd ${CLAUDE_PLUGIN_ROOT}/follow-builders/scripts
+mkdir -p "$HOME/.follow-builders/logs"
 DATE=$(node -e "process.stdout.write(require('/tmp/fb-digest.json').date)")
 if node render-digest-html.js --in /tmp/fb-digest.json --out "/tmp/AI-Builders-Digest-$DATE.html" 2>>"$HOME/.follow-builders/logs/render.err.log"; then
   node deliver.js --html "/tmp/AI-Builders-Digest-$DATE.html" --date "$DATE" \
