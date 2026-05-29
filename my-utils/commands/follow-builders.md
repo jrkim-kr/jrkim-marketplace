@@ -371,6 +371,23 @@ Assemble the digest following `prompts.digest_intro`.
 
 ### Step 5: Apply language
 
+**If `config.delivery.format === "html"`:** Do NOT produce interleaved text.
+Instead assemble a single JSON object and write it to `/tmp/fb-digest.json`,
+with this shape (every item needs a real link; every summary needs zh+en+ko):
+
+- `date` (YYYY-MM-DD), `languages: ["zh","en","ko"]`
+- `tldr`: `{ zh:[5–6 bullets], en:[…], ko:[…] }` — the day's key takeaways per language
+- `sections[]`: each `{ key, label:{zh,en,ko}, groups[] }` in order twitter → blogs → podcasts
+- `groups[]`: each `{ label, items[] }`. `label` is a plain string for blog/podcast
+  sources (e.g. "Anthropic Engineering"); for tweets it is `{zh,en,ko}` (the builder's
+  name + role, translated). Each tweet builder is one group.
+- `items[]`: blog/podcast item `{ title:{zh,en,ko}, url, summary:{zh,en,ko} }`;
+  tweet item `{ urls:[…], summary:{zh,en,ko} }` (no title; multiple tweet links allowed).
+- Omit any section/group/item with no real content. Use `\n\n` between paragraphs.
+
+Then ALSO write a plain-text version of the digest (any one language is fine) to
+`/tmp/fb-digest.txt` as the fallback body. Then skip the rest of Step 5.
+
 Read `config.language` from the JSON:
 - **"en":** Entire digest in English.
 - **"ko":** Entire digest in Korean. Follow `prompts.translate`.
@@ -410,6 +427,23 @@ Read `config.language` from the JSON:
 **Follow this setting exactly. Do NOT mix languages.**
 
 ### Step 6: Deliver
+
+**If `config.delivery.format === "html"`:** render then send as attachment, with a
+plain-text fallback so a bad render never drops the day's digest:
+
+```bash
+cd ${CLAUDE_PLUGIN_ROOT}/follow-builders/scripts
+DATE=$(node -e "process.stdout.write(require('/tmp/fb-digest.json').date)")
+if node render-digest-html.js --in /tmp/fb-digest.json --out "/tmp/AI-Builders-Digest-$DATE.html" 2>>"$HOME/.follow-builders/logs/render.err.log"; then
+  node deliver.js --html "/tmp/AI-Builders-Digest-$DATE.html" --date "$DATE" \
+    --body "今日 AI Builders Digest，详见附件。" 2>/dev/null
+else
+  echo "render failed, falling back to plain text" >> "$HOME/.follow-builders/logs/render.err.log"
+  node deliver.js --file /tmp/fb-digest.txt 2>/dev/null
+fi
+```
+
+Then stop (do not run the default text delivery below).
 
 Read `config.delivery.method` from the JSON:
 

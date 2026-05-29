@@ -53,6 +53,12 @@
         "email": {
           "type": "string",
           "description": "Email address to send digest to (only for email method)"
+        },
+        "format": {
+          "type": "string",
+          "enum": ["text", "html"],
+          "default": "text",
+          "description": "Email body format. 'text' = plain text body (default). 'html' = short text body + tabbed HTML file attachment (trilingual)."
         }
       }
     },
