@@ -94,3 +94,18 @@ test('throws when no sections have content', () => {
   assert.throws(() => renderHtml({ date: 'x', languages: ['zh'], tldr: { zh: [] }, sections: [] }),
     /no content/i);
 });
+
+test('javascript: urls are sanitized in href', () => {
+  const data = JSON.parse(JSON.stringify(sample));
+  data.sections[1].groups[0].items[0].url = 'javascript:alert(1)';
+  const html = renderHtml(data);
+  assert.doesNotMatch(html, /href="javascript:/i);
+});
+
+test('toc has no dangling anchor for a language missing that group', () => {
+  const data = JSON.parse(JSON.stringify(sample));
+  data.sections[1].groups[0].items[0].summary.ko = ''; // blog group empty in ko
+  const html = renderHtml(data);
+  const koPanel = html.split('data-lang="ko"')[1] || '';
+  assert.doesNotMatch(koPanel, /href="#ko-s1-g0"/);
+});

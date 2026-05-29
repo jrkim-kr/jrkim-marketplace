@@ -65,9 +65,11 @@ function renderTldr(data, lang) {
 function renderToc(data, lang) {
   const blocks = (data.sections || []).map((sec, si) => {
     const links = (sec.groups || []).map((g, gi) =>
-      `<a class="toclink" href="#${gid(lang, si, gi)}">${esc(pick(g.label, lang))}</a>`).join('');
+      groupHasContent(g, lang)
+        ? `<a class="toclink" href="#${gid(lang, si, gi)}">${esc(pickLang(g.label, lang))}</a>`
+        : '').join('');
     if (!links) return '';
-    return `<div class="tocsec"><div class="toclabel">${esc(pick(sec.label, lang))}</div><div class="toclinks">${links}</div></div>`;
+    return `<div class="tocsec"><div class="toclabel">${esc(pickLang(sec.label, lang))}</div><div class="toclinks">${links}</div></div>`;
   }).join('');
   return `<nav class="toc"><div class="boxlabel">${TOC_LABEL[lang]}</div>${blocks}</nav>`;
 }
@@ -77,7 +79,9 @@ function renderPanel(data, lang, active) {
 }
 
 export function renderHtml(data) {
-  const langs = data.languages || ['zh', 'en', 'ko'];
+  const VALID_LANGS = ['zh', 'en', 'ko'];
+  let langs = (data.languages || VALID_LANGS).filter(l => VALID_LANGS.includes(l));
+  if (!langs.length) langs = VALID_LANGS;
   // bail loudly if there is nothing to show in the primary language
   const hasContent = (data.sections || []).some(sec =>
     (sec.groups || []).some(g => (g.items || []).some(it => {
