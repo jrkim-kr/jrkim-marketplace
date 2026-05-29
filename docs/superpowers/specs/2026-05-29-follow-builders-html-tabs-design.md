@@ -84,27 +84,52 @@ launchd 09:30 → run-digest.sh → claude -p "/my-utils:follow-builders"
   "languages": ["zh", "en", "ko"],
   "sections": [
     {
-      "key": "twitter",
-      "label": { "zh": "X / 推文", "en": "X / Twitter", "ko": "X / 트위터" },
-      "items": [
+      "key": "blogs",
+      "label": { "zh": "官方博客", "en": "Official Blogs", "ko": "공식 블로그" },
+      "groups": [
         {
-          "source": "Box CEO Aaron Levie",
-          "url": "https://x.com/levie/status/123",
-          "author": "Aaron Levie",
-          "summary": { "zh": "...", "en": "...", "ko": "..." }
+          "label": "Anthropic Engineering",
+          "items": [
+            {
+              "title": "An update on recent Claude Code quality reports",
+              "url": "https://www.anthropic.com/engineering/april-23-postmortem",
+              "summary": { "zh": "...", "en": "...", "ko": "..." }
+            }
+          ]
         }
       ]
     },
-    { "key": "blogs",    "label": { "zh": "官方博客", "en": "Blogs",   "ko": "블로그" },   "items": [ ... ] },
-    { "key": "podcasts", "label": { "zh": "播客",     "en": "Podcast", "ko": "팟캐스트" }, "items": [ ... ] }
+    {
+      "key": "podcasts",
+      "label": { "zh": "播客", "en": "Podcasts", "ko": "팟캐스트" },
+      "groups": [
+        {
+          "label": "AI & I by Every",
+          "items": [
+            {
+              "title": "We Automated Everything With AI and Tripled Our Headcount",
+              "url": "https://www.youtube.com/watch?v=dCmOTURRf1Y",
+              "summary": { "zh": "...", "en": "...", "ko": "..." }
+            }
+          ]
+        }
+      ]
+    }
   ]
 }
 ```
 
+结构为三层：**板块 section（官方博客/播客/推文）→ 来源 group（如 Anthropic
+Engineering、Claude Blog、AI & I by Every）→ 文章 item**。这层 `groups` 是用今天真实
+数据做样本渲染时发现的：现有 digest-intro 本就把"博客名/播客名"当作来源小标题，故
+schema 必须有这一层。推文板块若每位 builder 视为一个 group，其下 items 为其多条推文。
+
+多段摘要：`summary` 文本中的 `\n\n` 由渲染器拆成多个段落。
+
 规则（沿用现有 prompts 的硬约束）：
 
 - 板块顺序：twitter → blogs → podcasts。
-- 只包含有新内容的板块/条目；无内容的板块整段省略。
+- 只包含有新内容的板块/来源/条目；无内容的整段省略。
 - 每个条目必须有 `url`（无链接不收录），三语 `summary` 必须齐全。
 - 不编造内容、不编造职位（用 `bio` 或仅用人名）。
 
@@ -117,7 +142,7 @@ launchd 09:30 → run-digest.sh → claude -p "/my-utils:follow-builders"
 - 输出 HTML 结构：
   - 顶部标题区：`AI Builders Digest · <date>`
   - tab 栏：中 / EN / 한（按 `languages` 顺序，默认第一个激活）
-  - 每个语言面板：按 sections 渲染 该语言 `label` 小标题 + 条目（标题 + 摘要 + 原文链接）
+  - 每个语言面板：按 section → group → item 三层渲染（板块大标题 + 来源小标题 + 文章标题/多段摘要/原文链接）
   - tab 切换：点击 tab 显示对应 `[data-lang]` 面板、隐藏其余（约 10 行原生 JS）
 - 样式（B · 杂志社论风）：
   - 背景米色纸感（`#fbf9f4`），正文深灰（`#1a1a1a`）
