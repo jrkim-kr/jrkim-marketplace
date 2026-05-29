@@ -34,6 +34,12 @@ const ENV_PATH = join(USER_DIR, '.env');
 
 // -- Read input --------------------------------------------------------------
 
+// Reads a CLI flag value, e.g. argOf('--html') -> next argv token or null.
+function argOf(flag) {
+  const i = process.argv.indexOf(flag);
+  return i !== -1 ? process.argv[i + 1] : null;
+}
+
 // The digest text can come from stdin, --message flag, or --file flag
 async function getDigestText() {
   const args = process.argv.slice(2);
@@ -137,6 +143,19 @@ export function buildEmailPayload({ htmlContent, bodyText, toEmail, dateStr }) {
   };
 }
 
+// Sends an HTML-attachment digest via Resend.
+async function sendEmailWithAttachment({ htmlContent, bodyText, apiKey, toEmail, dateStr }) {
+  const res = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+    body: JSON.stringify(buildEmailPayload({ htmlContent, bodyText, toEmail, dateStr }))
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(`Resend API error: ${err.message || JSON.stringify(err)}`);
+  }
+}
+
 // Sends the digest via Resend's email API.
 // The user provides their own Resend API key and email address.
 async function sendEmail(text, apiKey, toEmail) {
@@ -176,7 +195,8 @@ async function main() {
   const delivery = config.delivery || { method: 'stdout' };
   const digestText = await getDigestText();
 
-  if (!digestText || digestText.trim().length === 0) {
+  const htmlMode = argOf('--html');
+  if (!htmlMode && (!digestText || digestText.trim().length === 0)) {
     console.log(JSON.stringify({ status: 'skipped', reason: 'Empty digest text' }));
     return;
   }
@@ -202,12 +222,18 @@ async function main() {
         const toEmail = delivery.email;
         if (!apiKey) throw new Error('RESEND_API_KEY not found in .env');
         if (!toEmail) throw new Error('delivery.email not found in config.json');
-        await sendEmail(digestText, apiKey, toEmail);
-        console.log(JSON.stringify({
-          status: 'ok',
-          method: 'email',
-          message: `Digest sent to ${toEmail}`
-        }));
+
+        const htmlPath = argOf('--html');
+        if (htmlPath) {
+          const htmlContent = await readFile(htmlPath, 'utf-8');
+          const dateStr = argOf('--date') || new Date().toISOString().slice(0, 10);
+          const bodyText = argOf('--body') || '';
+          await sendEmailWithAttachment({ htmlContent, bodyText, apiKey, toEmail, dateStr });
+          console.log(JSON.stringify({ status: 'ok', method: 'email', mode: 'html', message: `Digest (HTML) sent to ${toEmail}` }));
+        } else {
+          await sendEmail(digestText, apiKey, toEmail);
+          console.log(JSON.stringify({ status: 'ok', method: 'email', message: `Digest sent to ${toEmail}` }));
+        }
         break;
       }
 
