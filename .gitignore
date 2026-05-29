@@ -6,3 +6,5 @@
 credentials*.json
 node_modules/
 *.log
+
+.superpowers/
