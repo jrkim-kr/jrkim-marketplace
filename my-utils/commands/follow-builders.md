@@ -437,7 +437,7 @@ mkdir -p "$HOME/.follow-builders/logs"
 DATE=$(node -e "process.stdout.write(require('/tmp/fb-digest.json').date)")
 if node render-digest-html.js --in /tmp/fb-digest.json --out "/tmp/AI-Builders-Digest-$DATE.html" 2>>"$HOME/.follow-builders/logs/render.err.log"; then
   node deliver.js --html "/tmp/AI-Builders-Digest-$DATE.html" --date "$DATE" \
-    --body "今日 AI Builders Digest，详见附件。" 2>/dev/null
+    --body "今日 AI Builders Digest，详见附件。📱 手机邮件可直接预览；💻 电脑版 Gmail 会显示源码，下载后用浏览器打开即可。" 2>/dev/null
 else
   echo "render failed, falling back to plain text" >> "$HOME/.follow-builders/logs/render.err.log"
   node deliver.js --file /tmp/fb-digest.txt 2>/dev/null

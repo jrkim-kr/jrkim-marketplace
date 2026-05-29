@@ -138,7 +138,7 @@ export function buildEmailPayload({ htmlContent, bodyText, toEmail, dateStr }) {
     from: 'AI Builders Digest <digest@resend.dev>',
     to: [toEmail],
     subject: `AI Builders Digest — ${dateStr}`,
-    text: (bodyText && bodyText.trim()) ? bodyText : '今日 AI Builders Digest，详见附件。',
+    text: (bodyText && bodyText.trim()) ? bodyText : '今日 AI Builders Digest，详见附件。📱 手机邮件可直接预览；💻 电脑版 Gmail 会显示源码，下载后用浏览器打开即可。',
     attachments: [{ filename: `AI-Builders-Digest-${dateStr}.html`, content: base64 }]
   };
 }
