@@ -15,14 +15,25 @@ function esc(s) {
 function inlineCode(s) { return s.replace(/`([^`]+)`/g, '<code>$1</code>'); }
 function rich(text) {
   return String(text || '').split(/\n\n+/)
-    .map(p => `<p class="sum">${inlineCode(esc(p))}</p>`).join('');
+    .map(p => p.trim() ? `<p class="sum">${inlineCode(esc(p))}</p>` : '').join('');
 }
 // label/title may be a plain string (same across langs) or {zh,en,ko}
-function pick(v, lang) {
+function pickLang(v, lang) {
   if (v == null) return '';
   return typeof v === 'string' ? v : (v[lang] ?? v.en ?? '');
 }
 function urlsOf(it) { return it.urls && it.urls.length ? it.urls : (it.url ? [it.url] : []); }
+// Only allow http(s) links in href; neutralize javascript:/data:/etc.
+function safeUrl(u) {
+  const s = String(u ?? '').trim();
+  return /^https?:\/\//i.test(s) ? s : '#';
+}
+function groupHasContent(g, lang) {
+  return (g.items || []).some(it => {
+    const s = it.summary?.[lang];
+    return s && s.trim() && urlsOf(it).length;
+  });
+}
 function gid(lang, si, gi) { return `${lang}-s${si}-g${gi}`; }
 
 function renderItem(it, lang) {
@@ -30,21 +41,21 @@ function renderItem(it, lang) {
   if (!sum || !sum.trim()) return '';
   const urls = urlsOf(it);
   if (!urls.length) return '';
-  const title = it.title ? `<h4 class="ptitle">${inlineCode(esc(pick(it.title, lang)))}</h4>` : '';
+  const title = it.title ? `<h4 class="ptitle">${inlineCode(esc(pickLang(it.title, lang)))}</h4>` : '';
   const links = urls.map((u, i) =>
-    `<a class="lk" href="${esc(u)}" target="_blank" rel="noopener">${SRC_LABEL[lang]}${urls.length > 1 ? ' ' + (i + 1) : ''} ↗</a>`
+    `<a class="lk" href="${esc(safeUrl(u))}" target="_blank" rel="noopener">${SRC_LABEL[lang]}${urls.length > 1 ? ' ' + (i + 1) : ''} ↗</a>`
   ).join('<span class="dot">·</span>');
   return `<article class="item">${title}${rich(sum)}<div class="links">${links}</div></article>`;
 }
 function renderGroup(g, lang, si, gi) {
   const items = (g.items || []).map(it => renderItem(it, lang)).join('');
   if (!items.trim()) return '';
-  return `<div class="grp" id="${gid(lang, si, gi)}"><div class="grplabel">${esc(pick(g.label, lang))}</div>${items}</div>`;
+  return `<div class="grp" id="${gid(lang, si, gi)}"><div class="grplabel">${esc(pickLang(g.label, lang))}</div>${items}</div>`;
 }
 function renderSection(sec, lang, si) {
   const groups = (sec.groups || []).map((g, gi) => renderGroup(g, lang, si, gi)).join('');
   if (!groups.trim()) return '';
-  return `<section class="sec"><h2 class="seclabel">${esc(pick(sec.label, lang))}</h2>${groups}</section>`;
+  return `<section class="sec"><h2 class="seclabel">${esc(pickLang(sec.label, lang))}</h2>${groups}</section>`;
 }
 function renderTldr(data, lang) {
   const items = (data.tldr?.[lang] || []).map(b => `<li>${inlineCode(esc(b))}</li>`).join('');
