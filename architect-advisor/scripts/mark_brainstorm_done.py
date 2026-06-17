@@ -35,6 +35,10 @@ from pathlib import Path
 
 STATE_DIR = Path.home() / ".claude" / "state"
 
+# Global kill switch shared with gate_writing_plans.py — while present, no
+# marker is written so finished brainstorms never queue up a stale gate.
+OFF_FLAG = STATE_DIR / "brainstorm-router.off"
+
 
 def _state_file_for(project_root: str) -> Path:
     digest = hashlib.sha1(str(Path(project_root).resolve()).encode()).hexdigest()[:8]
@@ -75,6 +79,8 @@ def main() -> int:
 
 
 def _run() -> int:
+    if OFF_FLAG.is_file():
+        return 0
     payload = _read_payload()
     if not isinstance(payload, dict):
         return 0

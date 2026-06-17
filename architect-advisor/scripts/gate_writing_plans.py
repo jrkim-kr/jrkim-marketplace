@@ -36,6 +36,10 @@ from pathlib import Path
 
 STATE_DIR = Path.home() / ".claude" / "state"
 
+# Global kill switch: `touch ~/.claude/state/brainstorm-router.off` disables the
+# gate entirely; `rm` it to re-enable. Checked before any other logic.
+OFF_FLAG = STATE_DIR / "brainstorm-router.off"
+
 
 def _state_file_for(project_root: str) -> Path:
     digest = hashlib.sha1(str(Path(project_root).resolve()).encode()).hexdigest()[:8]
@@ -62,6 +66,8 @@ def main() -> int:
 
 
 def _run() -> int:
+    if OFF_FLAG.is_file():
+        return 0
     raw = os.environ.get("CLAUDE_TOOL_INPUT", "")
     if not raw:
         return 0
