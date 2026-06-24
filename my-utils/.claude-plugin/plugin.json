@@ -1,6 +1,6 @@
 {
   "name": "my-utils",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Collection of deterministic utility slash commands — daily scrum, doc sync, translations, screenshots, Notion logging, AI builder digest",
   "author": {
     "name": "jrkim"
