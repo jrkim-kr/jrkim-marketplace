@@ -69,11 +69,21 @@ FIELD_ALIASES = {
 
 H1_RE = re.compile(r"^#\s+(.+?)\s*$", re.MULTILINE)
 ERR_ID_RE = re.compile(r"ERR-(\d+)", re.IGNORECASE)
+DATE_ID_RE = re.compile(r"^(ERR-\d{4}-\d{2}-\d{2}(?:-[A-Za-z0-9._]+)*)$", re.IGNORECASE)
+# YAML frontmatter 의 `component:` — `## 영향 모듈` 섹션 대신 여기에 모듈을 적는
+# ERR 규범(flush 플러그인 산출물)이 있다. 섹션이 우선이고 이건 폴백.
+FM_COMPONENT_RE = re.compile(r"^component:\s*(.+?)\s*$", re.MULTILINE)
 # 코드블록 내 경로 또는 리스트 항목의 경로 추출
 PATH_RE = re.compile(r"`([^`\n]+?)`|(?:^|\s)([A-Za-z0-9_\-./]+/[A-Za-z0-9_\-./]+)")
 
 
 def extract_error_id(path: Path, body: str) -> str:
+    # 날짜식 ID(`ERR-2026-05-28-slug`)를 일련번호식(`ERR-001`)보다 먼저 본다.
+    # 순서를 바꾸면 `ERR-(\d+)` 가 앞 4자리만 물어 `ERR-2026` 으로 잘리고,
+    # 같은 해의 ERR 이 전부 한 ID 로 뭉개져 패턴 귀납이 무의미해진다.
+    m_date = DATE_ID_RE.match(path.stem)
+    if m_date:
+        return m_date.group(1)
     m = ERR_ID_RE.search(path.name)
     if m:
         return f"ERR-{int(m.group(1)):03d}"
@@ -158,6 +168,34 @@ def parse_checklist(section: str) -> list[str]:
     return items
 
 
+def parse_frontmatter_modules(body: str) -> list[str]:
+    """YAML frontmatter 의 `component:` 에서 모듈 목록을 회수한다.
+
+    `component: a.py, b.py` 처럼 콤마 또는 ` · ` 로 나열하는 관행을 모두 받는다.
+    frontmatter 블록(문서 선두의 `---` 쌍) 안에 있을 때만 인정 — 본문에 우연히
+    나온 `component:` 줄을 모듈로 오인하지 않기 위해서다.
+    """
+    if not body.startswith("---"):
+        return []
+    end = body.find("\n---", 3)
+    if end == -1:
+        return []
+    fm = body[3:end]
+    m = FM_COMPONENT_RE.search(fm)
+    if not m:
+        return []
+    raw = m.group(1)
+    parts = re.split(r"[,·]|\s{2,}", raw)
+    mods = []
+    for p in parts:
+        p = p.strip().strip("`").strip()
+        # `(_build_prompt 커밋 절 지시문)` 같은 괄호 보충은 떼고 경로만 남긴다
+        p = re.sub(r"\s*\(.*?\)\s*$", "", p).strip()
+        if p and p not in mods:
+            mods.append(p)
+    return mods
+
+
 def parse_err_file(path: Path) -> dict:
     body = path.read_text(encoding="utf-8", errors="replace")
     missing = []
@@ -181,6 +219,15 @@ def parse_err_file(path: Path) -> dict:
             # 첫 문단만 요약용으로 (너무 길면 잘림)
             para = section.split("\n\n", 1)[0].strip()
             entry[field] = para[:500]
+
+    # 모듈 폴백 — 섹션이 없어도 frontmatter 의 `component:` 가 있으면 그걸 쓴다.
+    # 모듈 정보가 비면 공현 행렬이 통째로 비고, hook 의 모듈쌍 그룹핑도 죽는다.
+    if not entry.get("affected_modules"):
+        fm = parse_frontmatter_modules(body)
+        if fm:
+            entry["affected_modules"] = fm
+            if "affected_modules" in missing:
+                missing.remove("affected_modules")
 
     entry["missing_fields"] = missing
     return entry
