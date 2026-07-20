@@ -403,7 +403,7 @@ decompose의 결합 관계 분석을 **동적 관점**으로 다시 본다:
 
 ### 분리 skill: `/arch-err-pattern`
 
-`skills/arch-err-pattern/SKILL.md` — `<ERR_DIR>/ERR-*.md`를 횡단 분석해 재발 충돌 패턴을 추출, `architect-advisor/<project>/patterns/CONFLICT_PATTERNS.md`를 생성. `writing-plans`가 자동 참조. ERR_DIR은 `.flushrc.json` → `find errors/` → `./errors/` 3단계 자동 해석 (W0.1).
+`skills/arch-err-pattern/SKILL.md` — `<ERR_DIR>/ERR-*.md`를 횡단 분석해 재발 충돌 패턴을 추출, `architect-advisor/<project>/patterns/CONFLICT_PATTERNS.md`를 생성. `to-tickets`가 자동 참조. ERR_DIR은 `.flushrc.json` → `find errors/` → `./errors/` 3단계 자동 해석 (W0.1).
 
 ### ADR 생성: `new_adr.py`
 

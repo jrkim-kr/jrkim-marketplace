@@ -44,6 +44,8 @@ from lib.advisor_paths import resolve_layout  # noqa: E402
 
 PROMOTE_CONFIDENCE = 0.7
 PROMOTE_MIN_OCCURRENCES = 2
+# 근거 ERR이 이 수 이상이면 '확립', 미만이면 '잠정'. skills/arch-err-pattern/SKILL.md와 같은 기준.
+ESTABLISHED_MIN_ERRS = 5
 
 
 def main() -> int:
@@ -414,17 +416,31 @@ def _promote_to_conflict_patterns(layout, candidates_file: Path, pattern_key: st
         if "## 자동 추출 패턴" not in existing:
             existing += "\n## 자동 추출 패턴\n\n"
 
+    # 증거 등급 — SKILL.md와 같은 기준. hook 승격은 보통 근거 2건이므로 대개 잠정이다.
+    # 등급이 없으면 소비자가 잠정을 확립으로 오인해 강제 수락 기준으로 주입한다.
+    established = len(err_ids) >= ESTABLISHED_MIN_ERRS
+    grade = "확립" if established else "잠정"
+    # 확립만 체크박스(=충족해야 완료). 잠정은 평범한 불릿으로 두어 완료를 막지 않는다.
+    bullet = "- [ ]" if established else "-"
+    grade_note = (
+        "to-tickets가 필수 수락 기준으로 주입"
+        if established
+        else f"to-tickets가 참고로만 주입. 근거 {ESTABLISHED_MIN_ERRS}건이 되면 확립으로 승격"
+    )
+
     pattern_md = (
-        f"### {' + '.join(modules)} 결합 충돌\n"
-        f"<!-- pattern_key: {pattern_key} -->\n\n"
+        f"### {' + '.join(modules)} 결합 충돌 `[{grade}]`\n"
+        f"<!-- pattern_key: {pattern_key} -->\n"
+        f"<!-- evidence: {grade} | ERR 근거 {len(err_ids)}건 -->\n\n"
         f"- **추출 시각**: {time.strftime('%Y-%m-%dT%H:%M:%S')}\n"
+        f"- **증거 등급**: {grade} (근거 {len(err_ids)}건) — {grade_note}\n"
         f"- **근거 ERR**: {', '.join(err_ids)}\n"
         f"- **공통 모듈**: {', '.join(modules)}\n"
         f"- **공통 근본 원인 단서**: {cause or '(미파싱)'}\n"
         f"- **상태**: candidate → promoted (confidence ≥ {PROMOTE_CONFIDENCE}, occurrences ≥ {PROMOTE_MIN_OCCURRENCES})\n\n"
-        f"**예방 규칙 (Prevention Checklist)** — 다음 writing-plans에서 자동 주입:\n"
-        f"- [ ] {modules[0]} 와 {modules[-1]} 에 동시 작용하는 step은 동일 트랜잭션 경계 안에 둘 것\n"
-        f"- [ ] 두 모듈을 함께 변경하는 PR은 통합 테스트 필수\n\n"
+        f"**예방 규칙 (Prevention Checklist)** — 다음 to-tickets에서 자동 주입:\n"
+        f"{bullet} {modules[0]} 와 {modules[-1]} 에 동시 작용하는 step은 동일 트랜잭션 경계 안에 둘 것\n"
+        f"{bullet} 두 모듈을 함께 변경하는 PR은 통합 테스트 필수\n\n"
     )
 
     cp_file.write_text(existing + pattern_md, encoding="utf-8")
