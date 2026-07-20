@@ -48,11 +48,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from lib.resolve_error_dir import resolve_error_dir, describe_resolution
 
 # 별칭 매핑 — architect-advisor arch-err-pattern skill과 동기화 유지
+#
+# 헤더는 정확히 일치해야 잡힌다(뒤 괄호 보충만 허용). 실측 이유로 세 갈래를 추가:
+#   ① 중국어 헤더 — 대화 언어가 중국어인 저장소는 ERR 헤더도 중국어로 쓴다
+#      (ai-pm 46건 중 `## 根因` 30건. 이게 빠져 43건이 통째로 미파싱이었다)
+#   ② 한국어 축약형 — `근인`/`처방`/`해결`. 규범은 `근본 원인`이지만 실제로는 축약이 다수
+#   ③ 복합 헤더 — `재발 방지 / 패턴` 처럼 두 절을 한 헤더에 합친 형태
 FIELD_ALIASES = {
-    "root_cause": ["근본 원인", "Root Cause", "원인", "Cause", "분석"],
-    "affected_modules": ["영향 모듈", "Affected Modules", "Affected", "Impact", "영향 범위", "관련 파일", "Related Files"],
-    "solution": ["해결책", "Solution", "Fix", "해결 방법"],
-    "prevention": ["재발 방지 체크리스트", "Prevention", "Prevention Checklist", "재발 방지", "예방 체크리스트", "예방"],
+    "root_cause": ["근본 원인", "Root Cause", "원인", "Cause", "분석",
+                   "근인", "根因", "根本原因"],
+    "affected_modules": ["영향 모듈", "Affected Modules", "Affected", "Impact",
+                         "영향 범위", "관련 파일", "Related Files",
+                         "영향 파일", "影响模块", "影响范围"],
+    "solution": ["해결책", "Solution", "Fix", "해결 방법",
+                 "해결", "처방", "修复", "解决", "解决方案"],
+    "prevention": ["재발 방지 체크리스트", "Prevention", "Prevention Checklist",
+                   "재발 방지 / 패턴", "재발 방지", "예방 체크리스트", "예방",
+                   "재사용 가능 패턴", "可复用 패턴", "교훈", "复发防止", "预防"],
 }
 
 H1_RE = re.compile(r"^#\s+(.+?)\s*$", re.MULTILINE)
