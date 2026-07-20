@@ -1,6 +1,6 @@
 ---
 name: arch-err-pattern
-description: "architect-advisor 횡단 도구. `<ERR_DIR>/ERR-*.md`를 가로로 훑어 재발 충돌 패턴을 추출해 `CONFLICT_PATTERNS.md`를 생성한다. ERR_DIR은 `.flushrc.json` → `find errors/` → `./errors/` 3단계로 자동 해석되며, 여러 `errors/` 디렉토리(예: 멀티-패키지 레포)가 있으면 모두 합류해 단일 패턴 풀로 누적된다. 다음 `writing-plans`가 자동 참조. 트리거: '패턴 추출', 'CONFLICT_PATTERNS', '冲突模式', 'extract conflict patterns'."
+description: "architect-advisor 횡단 도구. `<ERR_DIR>/ERR-*.md`를 가로로 훑어 재발 충돌 패턴을 추출해 `CONFLICT_PATTERNS.md`를 생성한다. ERR_DIR은 `.flushrc.json` → `find errors/` → `./errors/` 3단계로 자동 해석되며, 여러 `errors/` 디렉토리(예: 멀티-패키지 레포)가 있으면 모두 합류해 단일 패턴 풀로 누적된다. 다음 `to-tickets`가 자동 참조. 트리거: '패턴 추출', 'CONFLICT_PATTERNS', '冲突模式', 'extract conflict patterns'."
 argument-hint: "[ERR 디렉토리 경로 (생략 시 자동 해석)] 또는 [프로젝트 슬러그]"
 user-invokable: true
 origin: "Auto-accumulation pattern (W3.1) borrowed from ECC `continuous-learning-v2` (affaan-m/everything-claude-code) instinct extraction + project-scoped storage + confidence ladder, adapted as flush↔advisor producer-consumer split + ADR↔ERR bidirectional refs"
@@ -16,9 +16,10 @@ origin: "Auto-accumulation pattern (W3.1) borrowed from ECC `continuous-learning
 
 | 상황 | 효과 |
 |---|---|
-| `<ERR_DIR>`에 ERR-*.md **5개 이상** 쌓였을 때 | 첫 패턴 추출, 기준선 확립 |
-| 신규 ERR 5건 추가 또는 월 1회 | 증분 업데이트 |
-| `writing-plans` 시작 전 | `CONFLICT_PATTERNS.md`를 읽어 task 수락 기준에 주입 (글로벌 CLAUDE.md §6 연동) |
+| `<ERR_DIR>`에 ERR-*.md **2개 이상** 쌓였을 때 | 첫 패턴 추출 (잠정) |
+| ERR **5건 이상** | 잠정 패턴이 확립으로 승격 가능 |
+| 신규 ERR 2건 추가 또는 월 1회 | 증분 업데이트 |
+| `to-tickets` 시작 전 | `CONFLICT_PATTERNS.md`를 읽어 task 수락 기준에 주입 (글로벌 CLAUDE.md §6 연동) |
 | 고위험 모듈 리팩터링 직전 | 해당 모듈 관련 과거 패턴 pre-flight 브리핑 |
 
 > **ERR_DIR 해석 규칙 (W0.1 단일 진실)**
@@ -90,7 +91,7 @@ architect-advisor/
 └── patterns/
     ├── observations.jsonl       ← 모든 ERR 관측 로그 (감사용)
     ├── candidates.jsonl         ← 낮은 confidence pattern (대기열)
-    └── CONFLICT_PATTERNS.md     ← 정식 패턴 (writing-plans가 자동 참조)
+    └── CONFLICT_PATTERNS.md     ← 정식 패턴 (to-tickets가 자동 참조)
 ```
 
 monorepo 모드에서는 `architect-advisor/_shared/patterns/CONFLICT_PATTERNS.md` (모든 product 공유).
@@ -101,7 +102,24 @@ monorepo 모드에서는 `architect-advisor/_shared/patterns/CONFLICT_PATTERNS.m
 
 수동 `/arch-err-pattern` 호출은 자동 hook을 끄지 않는다. 수동은 한 번에 전체 횡단 분석으로 더 정교한 패턴(병합·승격)을 수행하고, 자동 hook은 incremental observation만 한다.
 
-**Early exit**: ERR이 **5건 미만**이면 패턴 귀납 보류. "샘플 부족 — 최소 5건 누적 후 재실행" 안내만 출력하고 저장하지 않는다.
+**Early exit**: ERR이 **2건 미만**이면 패턴 귀납 보류. "샘플 부족 — 최소 2건 누적 후 재실행" 안내만 출력하고 저장하지 않는다.
+
+**증거 등급 (W3.2)**: 2건으로도 귀납은 하되, 표본이 얕은 패턴을 확립된 규칙처럼 내보내지 않는다.
+
+| 등급 | 조건 | 소비자 취급 |
+|---|---|---|
+| `잠정` | 근거 ERR 2~4건 | `to-tickets`가 **참고**로만 주입. 수락 기준을 강제하지 않는다 |
+| `확립` | 근거 ERR 5건 이상 | `to-tickets`가 **필수** 수락 기준으로 주입 |
+
+등급은 패턴별로 매긴다. 문서 전체의 ERR 총수가 아니라 **그 패턴을 뒷받침하는 ERR 수**가 기준이다. ERR 12건짜리 문서에도 근거 2건짜리 잠정 패턴이 있을 수 있다.
+
+잠정 → 확립 승격 시 Changelog에 기록한다. 확립에서 잠정으로 내리지는 않는다(근거는 줄지 않으므로).
+
+> **왜 등급을 나누나**
+>
+> `CONFLICT_PATTERNS.md`는 글로벌 CLAUDE.md §6에 따라 `to-tickets`가 **모든 계획의 수락 기준에 자동 주입**한다. 표본 2건짜리 추측이 등급 없이 들어가면, 앞으로 만드는 모든 계획에 강제 체크 항목으로 박힌다. 잘못된 규칙은 규칙이 없는 것보다 비싸다.
+>
+> 그렇다고 5건을 기다리면 그 사이에는 아무 신호도 못 얻는다. 등급을 붙이면 **일찍 보되 과신하지 않는다**.
 
 ## 실행 흐름 (4단계)
 
@@ -128,6 +146,8 @@ python3 scripts/err_scan.py --dir custom/path/errors/
 JSON을 받아 아래 규칙으로 패턴 도출:
 
 - **정식 패턴 기준**: 같은 근본 원인이 **서로 다른 모듈 조합**에서 **2건 이상** 반복
+  - 모듈이 겹치는지는 보지 않는다. 자동 hook은 모듈 이름으로만 묶으므로 **서로 다른 파일에서 같은 원인이 재발하는 패턴은 hook이 절대 못 잡는다.** 그것을 잡는 것이 이 수동 귀납의 존재 이유다
+- **증거 등급 부여**: 근거 ERR 2~4건이면 `잠정`, 5건 이상이면 `확립`
 - **단일 사례(Singletons)**: 1건뿐이면 정식 패턴 아님. 별도 블록에 적재
 - **Singleton 자동 승격**: 이전 세대의 `CONFLICT_PATTERNS.md`에 singleton이었던 근본 원인이 이번 스캔에서 1건 더 발견되면 → 정식 패턴으로 승격하고 Changelog 기록
 - **패턴 병합**: 모듈·원인 둘 다 80% 이상 겹치면 1개로 병합 제안
@@ -151,28 +171,34 @@ JSON을 받아 아래 규칙으로 패턴 도출:
 - (이전 이력 유지)
 
 ## 개요
-- 총 ERR: N · 식별 패턴: M · 단일 사례: K
+- 총 ERR: N · 식별 패턴: M (확립 X · 잠정 Y) · 단일 사례: K
 
 ---
 
 <!-- pattern-id: M1 -->
-## 모드 1: [패턴 이름]
+<!-- evidence: 확립 | ERR 근거 5건 -->
+## 모드 1: [패턴 이름] `[확립]`
 
 **범주**: [상태 관리 / 경쟁 조건 / 에러 처리 / 스키마 호환성 / ...]
+**증거 등급**: 확립 (근거 5건) — to-tickets가 필수 수락 기준으로 주입
 **고위험 모듈 조합**: `module-a` ↔ `module-b`
 **전형적 증상**: 1-2문장 (트리거 + 증상)
 **과거 사례 (N건)**:
 - `ERR-XXX` — 한 줄 요약
 - `ERR-YYY` — 한 줄 요약
 
-**예방 규칙** (writing-plans 수락 기준):
+**예방 규칙** (to-tickets 수락 기준):
 - [ ] 구체·검증 가능한 항목
 - [ ] 검증 방법
 
 ---
 
 <!-- pattern-id: M2 -->
-## 모드 2: ...
+<!-- evidence: 잠정 | ERR 근거 2건 -->
+## 모드 2: [패턴 이름] `[잠정]`
+
+**증거 등급**: 잠정 (근거 2건) — to-tickets가 참고로만 주입. 근거 5건이 되면 확립으로 승격
+**(이하 확립 패턴과 같은 구조)**
 
 ---
 
@@ -182,11 +208,13 @@ JSON을 받아 아래 규칙으로 패턴 도출:
 |---|---|---|---|
 | 1 | ... | ... | ... |
 
-## writing-plans용 빠른 체크리스트
+## to-tickets용 빠른 체크리스트
 
-신규/수정이 다음 모듈을 건드릴 때 **반드시** 해당 예방 규칙 주입:
-- **[모듈 카테고리]** → M1 + M3
-- ...
+신규/수정이 다음 모듈을 건드릴 때 해당 예방 규칙 주입:
+
+| 모듈 카테고리 | 확립 패턴 (필수) | 잠정 패턴 (참고) |
+|---|---|---|
+| [카테고리] | M1, M3 | M2 |
 
 ---
 
@@ -221,18 +249,20 @@ python3 scripts/workflow-state.py patterns-stat \
 
 두 명령 모두 실행해야 `state/workflow.json`의 `patterns` 필드가 완전히 최신화됨.
 
-## Plan 소비 포맷 (writing-plans 측에서 사용)
+## Plan 소비 포맷 (to-tickets 측에서 사용)
 
 이 skill이 산출하는 `CONFLICT_PATTERNS.md`는 다음 두 흐름의 **공급원**이다:
 
 1. **수동 참조** — 사용자가 직접 읽어보는 경우
-2. **`writing-plans` 자동 주입** — 글로벌 CLAUDE.md §6에 정의된 플로우
+2. **`to-tickets` 자동 주입** — 글로벌 CLAUDE.md §6에 정의된 플로우
 
-`writing-plans` 측에서 CONFLICT_PATTERNS를 plan에 주입할 때 **반드시 이 포맷을 그대로 사용**한다. 포맷이 흔들리면 cross-session/cross-project grep과 비교가 깨진다.
+`to-tickets` 측에서 CONFLICT_PATTERNS를 plan에 주입할 때 **반드시 이 포맷을 그대로 사용**한다. 포맷이 흔들리면 cross-session/cross-project grep과 비교가 깨진다.
 
 ### 주입 포맷 1: 매칭된 task의 acceptance criteria
 
-매칭된 패턴이 있는 각 task에 다음 블록을 추가한다:
+**증거 등급에 따라 블록이 다르다.** 등급은 패턴 블록의 `<!-- evidence: ... -->` 주석에서 읽는다.
+
+확립 패턴 — 수락 기준으로 강제한다:
 
 ```markdown
 **Pattern-driven acceptance criteria:**
@@ -242,10 +272,22 @@ From 모드 N ([pattern name]):
 - [ ] [prevention rule 2]
 ```
 
+잠정 패턴 — 참고로만 붙인다. **수락 기준으로 만들지 않는다**:
+
+```markdown
+**Pattern-driven considerations (잠정 — 근거 N건):**
+
+From 모드 N ([pattern name]):
+- [prevention rule 1]
+- [prevention rule 2]
+```
+
 규칙:
 - `모드 N` 번호는 CONFLICT_PATTERNS.md의 `<!-- pattern-id: M<n> -->` 주석 번호 그대로 사용
 - `[prevention rule N]`은 해당 모드의 **예방 규칙** 섹션을 verbatim 복사 (재구성 금지)
 - 한 task가 여러 모드를 트리거하면 모드별로 블록을 반복
+- **잠정 패턴에는 체크박스(`- [ ]`)를 쓰지 않는다.** 체크박스는 "충족해야 완료"라는 뜻이고, 표본 2건짜리 추측에 그 무게를 주면 안 된다. 평범한 불릿으로 적어 읽는 사람이 판단하게 둔다
+- 잠정 패턴만 매칭된 task는 이것 때문에 완료가 막히지 않아야 한다
 
 ### 주입 포맷 2: plan 마지막 로그 섹션
 
@@ -258,14 +300,14 @@ Source: `architect-advisor/<project>/patterns/CONFLICT_PATTERNS.md`
 
 | Task | Triggered Patterns |
 |------|-------------------|
-| Task 1 | 모드 2, 모드 4 |
-| Task 3 | 모드 8 |
+| Task 1 | 모드 2 (확립), 모드 4 (확립) |
+| Task 3 | 모드 8 (잠정) |
 ```
 
 규칙:
 - 한 패턴도 매칭 안 된 plan이면 이 섹션 자체를 만들지 않는다 (빈 표 금지)
 - `Source:` 경로는 monorepo면 `architect-advisor/<product>/patterns/...`로 조정
-- `Triggered Patterns` 컬럼은 콤마로 분리
+- `Triggered Patterns` 컬럼은 콤마로 분리하고, 각 모드 뒤에 등급을 괄호로 표기
 
 ### 비매칭 시 동작
 
@@ -282,7 +324,10 @@ task의 모듈이 어떤 패턴과도 일치하지 않으면 — **아무것도 
    - 신규 패턴 발견 → 다음 번호(M<max+1>)로 추가
    - Singleton 승격 → 새 pattern-id 부여, Changelog에 기록
 4. 예방 규칙: 기존 항목 전부 보존 + 신규 항목만 append (중복 체크는 문자열 정규화 후 비교)
-5. Changelog에 이번 변경 1줄 추가, 이전 이력은 유지
+5. **증거 등급 재계산**: 사례를 append한 뒤 근거 ERR 수를 다시 세어 등급을 갱신한다
+   - 잠정(2~4건) → 5건 도달 시 **확립으로 승격**. `<!-- evidence: -->` 주석과 제목 배지를 함께 고치고 Changelog에 남긴다
+   - 확립 → 잠정 강등은 없다. 근거는 줄어들지 않는다
+6. Changelog에 이번 변경 1줄 추가, 이전 이력은 유지
 
 ## 완료 보고 포맷 (4단 구조)
 
@@ -291,19 +336,20 @@ task의 모듈이 어떤 패턴과도 일치하지 않으면 — **아무것도 
 <ERR_DIR>/ 12개 ERR을 횡단 분석했습니다.
 
 📌 핵심 결과
-- 정식 패턴 5개 (신규 3, 업데이트 2)
+- 정식 패턴 5개 — 확립 3, 잠정 2 (신규 3, 업데이트 2)
 - 고위험 조합 Top 3: `scheduler` ↔ `queue` (4건), ...
 - 단일 사례 4건 (모니터링)
 - Singleton 승격 1건: "상태 손실" 카테고리
+- 잠정 → 확립 승격 1건: M2 (근거 4건 → 5건)
 
 📊 Top 패턴
-| 모드 | 이름 | 사례 | 주요 모듈 |
-| M1  | 스케줄러-큐 레이스 | 3 | scheduler, queue |
-| ... |
+| 모드 | 이름 | 등급 | 근거 | 주요 모듈 |
+| M1  | 스케줄러-큐 레이스 | 확립 | 5건 | scheduler, queue |
+| M2  | ... | 잠정 | 2건 | ... |
 
 👉 다음 한 걸음
 - 저장: `architect-advisor/<project>/patterns/CONFLICT_PATTERNS.md`
-- `/superpowers:writing-plans` 실행 시 자동 참조 (글로벌 CLAUDE.md §6)
+- `to-tickets` 실행 시 자동 참조 (글로벌 CLAUDE.md §6)
 ```
 
 ## 출력 톤
@@ -312,7 +358,9 @@ task의 모듈이 어떤 패턴과도 일치하지 않으면 — **아무것도 
 
 ## 가드레일
 
-- **ERR < 5건**: 저장 없이 early exit
+- **ERR < 2건**: 저장 없이 early exit
+- **등급 표기 누락 금지**: 모든 패턴 블록에 `<!-- evidence: 확립|잠정 | ERR 근거 N건 -->` 주석과 제목 뒤 `` `[확립]` ``/`` `[잠정]` `` 배지를 반드시 단다. 등급이 없으면 `to-tickets`가 잠정을 확립으로 오인해 강제 수락 기준으로 주입한다
+- **잠정 패턴 과다 생성 금지**: 근거 2건짜리 패턴을 억지로 늘리지 않는다. 같은 근본 원인으로 묶이지 않으면 Singletons에 남긴다
 - **빈 디렉토리**: "<ERR_DIR>/ 없음 또는 ERR-*.md 없음" 안내만
 - **파일명 계약**: 저장 파일명은 반드시 `CONFLICT_PATTERNS.md` — 글로벌 CLAUDE.md §6이 이 이름으로 검색한다. 소비자 계약을 따른다. 소문자/변형 금지.
 - **파싱 실패 ERR**: `missing_fields`가 있으면 "데이터 품질 비고" 섹션에 기록. 무시하지 말 것.
@@ -321,5 +369,5 @@ task의 모듈이 어떤 패턴과도 일치하지 않으면 — **아무것도 
 
 - **입력 규격**: 글로벌 `~/.claude/CLAUDE.md §5` "Fix Tasks — Lightweight Error Documentation" (ERR-NNN 템플릿)
 - **소비자**: 글로벌 `~/.claude/CLAUDE.md §6` "Writing Plans — Conflict Pattern Check"
-- **관련 스킬**: `/architect-advisor:arch-portfolio` (단일 프로젝트 회고), `/superpowers:writing-plans` (주 소비자)
+- **관련 스킬**: `/architect-advisor:arch-portfolio` (단일 프로젝트 회고), `to-tickets` (주 소비자)
 - **헬퍼 스크립트**: `scripts/err_scan.py`, `scripts/workflow-state.py patterns-stat`
