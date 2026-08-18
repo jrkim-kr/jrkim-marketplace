@@ -123,8 +123,12 @@ def extract_section(body: str, aliases: list[str]) -> str | None:
         # ②는 실측으로 넣었다. energino 에서 근본 원인을 **이 모양으로만** 적은
         # 문서가 21건이었고 전부 못 읽히고 있었다. 갈라 주는 구분자(—·-·–·:)를
         # 요구하므로 "## 원인 아닌 것" 같은 다른 머리말은 걸리지 않는다.
+        #
+        # 줄 안에서만 본다(`\s` 가 아니라 `[ \t]`). `\s` 는 줄바꿈을 먹으므로
+        # 머리말 바로 아래 목록의 첫 줄(`- \`x\``)을 구분자로 오인해 통째로
+        # 삼킨다 — 처음에 그렇게 적어 모듈이 잡히던 문서 다섯이 빈 채로 나왔다.
         pattern = re.compile(
-            rf"^##\s+{re.escape(alias)}(?:\s*\([^)]*\))?(?:\s*[—\-–:].*)?\s*$",
+            rf"^##\s+{re.escape(alias)}(?:[ \t]*\([^)]*\))?(?:[ \t]*[—\-–:][^\n]*)?[ \t]*$",
             re.MULTILINE | re.IGNORECASE,
         )
         m = pattern.search(body)
