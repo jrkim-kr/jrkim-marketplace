@@ -100,10 +100,16 @@ def _run() -> int:
     # Observation log
     observations_file = layout.observations_file()
     observations_file.parent.mkdir(parents=True, exist_ok=True)
+    # 두 로그가 **같은 값**을 적어야 한다. 각자 구하면 한쪽만 낡는다.
+    err_path = (
+        str(target.relative_to(project_root))
+        if target.is_relative_to(project_root)
+        else str(target)
+    )
     obs_record = {
         "ts": int(time.time()),
         "err_id": parsed["err_id"],
-        "err_path": str(target.relative_to(project_root)) if target.is_relative_to(project_root) else str(target),
+        "err_path": err_path,
         "modules": parsed["modules"],
         "root_cause_first_line": parsed["root_cause_first_line"],
     }
@@ -117,7 +123,7 @@ def _run() -> int:
     # Candidate accumulation kept for audit/debug only.
     # CONFLICT_PATTERNS.md is now owned by the arch-err-pattern skill (triggered above)
     # which performs LLM-driven root-cause induction beyond simple pair coupling.
-    candidate = _build_candidate(parsed)
+    candidate = _build_candidate(parsed, err_path)
     if candidate is not None:
         candidates_file = layout.candidates_file()
         candidates_file.parent.mkdir(parents=True, exist_ok=True)
@@ -301,7 +307,7 @@ def _extract_section(text: str, header_aliases: list[str]) -> str:
     return ""
 
 
-def _build_candidate(parsed: dict) -> dict | None:
+def _build_candidate(parsed: dict, err_path: str) -> dict | None:
     if not parsed["modules"]:
         return None
     # Pattern key = sorted module pair (stable across orderings)
@@ -312,6 +318,9 @@ def _build_candidate(parsed: dict) -> dict | None:
         "pattern_key": key,
         "modules": sorted(parsed["modules"]),
         "err_id": parsed["err_id"],
+        # 번호만 적으면 그 번호가 나중에 **다른 문서**에게 붙었을 때 아무도 모른다.
+        # 경로를 함께 적어 두 값이 어긋나는 순간 검사가 잡을 수 있게 한다.
+        "err_path": err_path,
         "first_seen_root_cause": parsed["root_cause_first_line"],
     }
 
