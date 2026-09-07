@@ -66,11 +66,41 @@ Print the analysis result inline (type, scope, file list, binary warnings if any
 
 # PHASE 1: ERROR DOCUMENTATION (fix only — skip otherwise)
 
-1. Determine next error code:
+1. Determine next error code. **Count the remote, not just your local directory.**
+
    ```bash
-   ls <ERROR_DIR>/ERR-*.md 2>/dev/null | sed 's/.*ERR-\([0-9]*\).*/\1/' | sort -n | tail -1
+   BASE=$(git symbolic-ref -q --short refs/remotes/origin/HEAD 2>/dev/null || echo origin/main)
+   git fetch -q origin 2>/dev/null
+   { git ls-tree -r --name-only "$BASE" -- <ERROR_DIR> 2>/dev/null
+     gh pr list --state open --json files --jq '.[].files[].path' 2>/dev/null
+     ls <ERROR_DIR>/ERR-*.md 2>/dev/null
+   } | grep -oE 'ERR-[0-9]+' | sort -u -t- -k2 -n | tail -1
    ```
+
    Increment from highest. Ranges: 001-099 DOM | 100-199 Network | 200-299 Data | 300-399 Auth | 400+ Channel.
+
+   **Why three sources, not one.** The numbering rule ("count the highest, take the
+   next, no gaps") *forces* every concurrently-open branch to pick the same number.
+   Collisions are the default, not the exception. A local `ls` sees neither the
+   branches other people have open nor what landed on the base branch since you last
+   pulled — and the colliding file **is not in your checkout**, so local tests stay
+   green and only CI goes red, ten minutes after you push.
+
+   In one repo this happened **fifteen times**. Five of those, the number was held by
+   an open PR that `ls` could never have shown.
+
+   **Do not trim the inputs.** No `head -N` on the branch or PR listing. Truncating
+   the input to a max-finding computation makes the answer silently smaller, and a
+   too-small answer looks exactly like a correct one. (One incident: `head -60` cut
+   off the branch holding the number — its name literally contained `err-364`.)
+
+   Each source degrades on its own: no remote, no `gh`, not a git repo — that source
+   contributes nothing and the others still count. **Say which sources answered**, so
+   "checked, it's free" is never confused with "couldn't check."
+
+   **Count again right before merging.** Merging does not re-run CI, so if someone
+   takes your number between your green check and your merge, both PRs stay green and
+   the base branch goes red. This is the one moment no file-creation hook can cover.
 
 2. Create `<ERROR_DIR>/ERR-NNN-brief-description.md` in user's language:
    ```markdown
