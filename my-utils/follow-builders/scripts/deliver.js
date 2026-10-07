@@ -10,6 +10,7 @@
 //   echo "digest text" | node deliver.js
 //   node deliver.js --message "digest text"
 //   node deliver.js --file /path/to/digest.txt
+//   node deliver.js --pdf /path/to/digest.pdf --date YYYY-MM-DD   (email attachment)
 //
 // The script reads delivery config from ~/.follow-builders/config.json
 // and API keys from ~/.follow-builders/.env
@@ -130,25 +131,32 @@ async function sendTelegram(text, botToken, chatId) {
 
 // -- Email Delivery (Resend) -------------------------------------------------
 
-// Builds the Resend request body for an HTML-attachment digest email.
+// Builds the Resend request body for a digest email with one attachment.
+// Pass pdfContent (Buffer) to attach a PDF; otherwise htmlContent is attached.
 // Pure + exported so it can be unit-tested without hitting the network.
-export function buildEmailPayload({ htmlContent, bodyText, toEmail, dateStr }) {
-  const base64 = Buffer.from(htmlContent, 'utf-8').toString('base64');
+export function buildEmailPayload({ htmlContent, pdfContent, bodyText, toEmail, dateStr }) {
+  const isPdf = Boolean(pdfContent);
+  const base64 = isPdf
+    ? Buffer.from(pdfContent).toString('base64')
+    : Buffer.from(htmlContent, 'utf-8').toString('base64');
+  const defaultText = isPdf
+    ? '今日 AI Builders Digest，详见附件 PDF。'
+    : '今日 AI Builders Digest，详见附件。📱 手机邮件可直接预览；💻 电脑版 Gmail 会显示源码，下载后用浏览器打开即可。';
   return {
     from: 'AI Builders Digest <digest@resend.dev>',
     to: [toEmail],
     subject: `AI Builders Digest — ${dateStr}`,
-    text: (bodyText && bodyText.trim()) ? bodyText : '今日 AI Builders Digest，详见附件。📱 手机邮件可直接预览；💻 电脑版 Gmail 会显示源码，下载后用浏览器打开即可。',
-    attachments: [{ filename: `AI-Builders-Digest-${dateStr}.html`, content: base64 }]
+    text: (bodyText && bodyText.trim()) ? bodyText : defaultText,
+    attachments: [{ filename: `AI-Builders-Digest-${dateStr}.${isPdf ? 'pdf' : 'html'}`, content: base64 }]
   };
 }
 
-// Sends an HTML-attachment digest via Resend.
-async function sendEmailWithAttachment({ htmlContent, bodyText, apiKey, toEmail, dateStr }) {
+// Sends a digest with an HTML or PDF attachment via Resend.
+async function sendEmailWithAttachment({ htmlContent, pdfContent, bodyText, apiKey, toEmail, dateStr }) {
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-    body: JSON.stringify(buildEmailPayload({ htmlContent, bodyText, toEmail, dateStr }))
+    body: JSON.stringify(buildEmailPayload({ htmlContent, pdfContent, bodyText, toEmail, dateStr }))
   });
   if (!res.ok) {
     const err = await res.json();
@@ -195,8 +203,8 @@ async function main() {
   const delivery = config.delivery || { method: 'stdout' };
   const digestText = await getDigestText();
 
-  const htmlMode = argOf('--html');
-  if (!htmlMode && (!digestText || digestText.trim().length === 0)) {
+  const attachmentMode = argOf('--html') || argOf('--pdf');
+  if (!attachmentMode && (!digestText || digestText.trim().length === 0)) {
     console.log(JSON.stringify({ status: 'skipped', reason: 'Empty digest text' }));
     return;
   }
@@ -223,8 +231,15 @@ async function main() {
         if (!apiKey) throw new Error('RESEND_API_KEY not found in .env');
         if (!toEmail) throw new Error('delivery.email not found in config.json');
 
+        const pdfPath = argOf('--pdf');
         const htmlPath = argOf('--html');
-        if (htmlPath) {
+        if (pdfPath) {
+          const pdfContent = await readFile(pdfPath);
+          const dateStr = argOf('--date') || new Date().toISOString().slice(0, 10);
+          const bodyText = argOf('--body') || '';
+          await sendEmailWithAttachment({ pdfContent, bodyText, apiKey, toEmail, dateStr });
+          console.log(JSON.stringify({ status: 'ok', method: 'email', mode: 'pdf', message: `Digest (PDF) sent to ${toEmail}` }));
+        } else if (htmlPath) {
           const htmlContent = await readFile(htmlPath, 'utf-8');
           const dateStr = argOf('--date') || new Date().toISOString().slice(0, 10);
           const bodyText = argOf('--body') || '';

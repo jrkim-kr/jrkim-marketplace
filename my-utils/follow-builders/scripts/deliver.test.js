@@ -19,3 +19,11 @@ test('falls back to a default body when bodyText is empty', () => {
   const p = buildEmailPayload({ htmlContent: '<html></html>', bodyText: '', toEmail: 'c@x.com', dateStr: '2026-05-28' });
   assert.match(p.text, /详见附件/);
 });
+
+test('attaches PDF when pdfContent is given', () => {
+  const pdf = Buffer.from('%PDF-1.4 fake');
+  const p = buildEmailPayload({ pdfContent: pdf, bodyText: '', toEmail: 'c@x.com', dateStr: '2026-10-07' });
+  assert.equal(p.attachments[0].filename, 'AI-Builders-Digest-2026-10-07.pdf');
+  assert.deepEqual(Buffer.from(p.attachments[0].content, 'base64'), pdf);
+  assert.doesNotMatch(p.text, /源码/);
+});
